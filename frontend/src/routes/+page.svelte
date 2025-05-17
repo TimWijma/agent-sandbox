@@ -1,15 +1,27 @@
 <script lang="ts">
-	import { Button } from "$lib/components/ui/button";
-	import { Input } from "$lib/components/ui/input";
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	// import { Icon } from 'lucide-svelte';
-    import { Search, Bell, User } from '@lucide/svelte';
+	import { Search, Bell, User } from '@lucide/svelte';
+	import { ChatManager } from '$lib/scripts/ChatManager';
+
+	const chatManager = new ChatManager('http://localhost:8000');
+
+	let messages = [];
+	let newMessage = '';
+
+	const sendMessage = async () => {
+		if (newMessage.trim() === '') return;
+
+		let response = await chatManager.sendMessage(newMessage);
+		console.log(response);
+	};
 </script>
 
 <div class="grid h-screen grid-cols-[250px_1fr] grid-rows-[auto_1fr]">
 	<aside class="row-span-2 border-r border-gray-200 bg-gray-100 p-4">
 		<nav>
-			<ul class="space-y-4">
-			</ul>
+			<ul class="space-y-4"></ul>
 		</nav>
 	</aside>
 
@@ -28,11 +40,10 @@
 	</header>
 
 	<main class="col-start-2 flex flex-col justify-between bg-white p-4">
-		<div class="flex-1">
-			
-		</div>
-		<div class="border-t border-gray-200 pt-4">
-			<Input placeholder="Type your message here..." />
+		<div class="flex-1"></div>
+		<div class="flex items-center border-t border-gray-200 pt-4">
+			<Input bind:value={newMessage} placeholder="Type your message here..." />
+			<Button class="ml-2" on:click={sendMessage}>Send</Button>
 		</div>
 	</main>
 </div>

@@ -4,7 +4,6 @@ from services.tool_manager import ToolManager
 from fastapi import FastAPI, HTTPException
 from dotenv import load_dotenv
 from models.chat import ChatRequest, ChatResponse, ChatRole
-from logger import logger
 
 load_dotenv()
 
