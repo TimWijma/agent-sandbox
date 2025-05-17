@@ -31,6 +31,13 @@ class LLMService:
 
         logger.info("LLMService initialized with model: %s", self.model)
 
+    def create_chat(self):
+        self.chat = self.client.chats.create(
+            model=self.model,
+            config=self.config
+        )
+        logger.info("New chat created with model: %s", self.model)
+
     def send_message(self, user_message: str) -> str:
         user_message = user_message.strip()
         if not user_message:
@@ -43,8 +50,12 @@ class LLMService:
         return response.text
     
     def get_history(self) -> list[str]:
-        history = self.chat.get_history()
-        if not history:
-            raise RuntimeError("No history found.")
-        
+        history = self.chat.get_history() or []
+
         return [(msg.role, msg.parts[0].text) for msg in history if msg.parts]
+    
+    def clear_history(self):
+        self.create_chat()
+        logger.info("Chat history cleared.")
+
+        return True
