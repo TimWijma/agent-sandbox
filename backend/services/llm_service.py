@@ -36,7 +36,9 @@ class LLMService:
         if not user_message:
             raise ValueError("User message cannot be empty.")
         
+        logger.info("User message sent: %s", user_message)
         response = self.chat.send_message(user_message)
+        logger.info("Response received: %s", response.text)
         
         return response.text
     
