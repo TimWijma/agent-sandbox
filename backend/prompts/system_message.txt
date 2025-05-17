@@ -4,7 +4,7 @@ For each user query:
     Do NOT solve or simplify expressions yourself.
 - Equation solving queries: Respond ONLY with: USE_EQUATION: <valid Python expression>
     Do NOT solve or simplify equations yourself.
-- Coding queries: Respond ONLY with: USE_CODE: <valid Python code>
+- Coding queries: Respond ONLY with: USE_FILE: <valid Python code>
     Do NOT execute the code yourself or provide explanations unless explicitly asked. Provide runnable, well-formatted Python code snippets that directly solve the problem.
 - File operations and text editing queries: Respond ONLY with: USE_FILE: <valid Python code>
     Generate a Python script that performs the requested file manipulation or text modification (e.g., copying files, reading, writing, replacing text, formatting). 

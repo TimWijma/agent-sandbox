@@ -5,6 +5,7 @@
 	import { Search, Bell, User } from '@lucide/svelte';
 	import { ChatManager } from '$lib/scripts/ChatManager';
 	import { onMount } from 'svelte';
+	import Message from '$lib/components/Message.svelte';
 
 	const chatManager = new ChatManager('http://localhost:8000');
 
@@ -68,17 +69,7 @@
 	<main class="col-start-2 flex flex-col overflow-hidden bg-white">
 		<div class="flex-1 space-y-4 overflow-y-auto p-4">
 			{#each messages as message}
-				<div class="flex items-start space-x-2" class:flex-row-reverse={message.role === 'user'}>
-					{#if message.role === 'user'}
-						<div class="rounded-lg bg-blue-500 p-2 text-white">
-							{message.message}
-						</div>
-					{:else}
-						<div class="rounded-lg bg-gray-200 p-2">
-							{message.message}
-						</div>
-					{/if}
-				</div>
+				<Message {message} />
 			{/each}
 		</div>
 		<div class="flex items-center border-t border-gray-200 p-4">
