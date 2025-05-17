@@ -21,7 +21,7 @@ class LLMService:
 
         self.config = types.GenerateContentConfig(
             system_instruction=self.system_message,
-            temperature=0.1
+            temperature=0.5
         )
 
         self.chat = self.client.chats.create(

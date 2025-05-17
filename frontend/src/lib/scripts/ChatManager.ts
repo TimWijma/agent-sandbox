@@ -7,6 +7,15 @@ export class ChatManager {
 		this.backendUrl = backendUrl;
 	}
 
+	async getMessages(): Promise<any> {
+		const url = `${this.backendUrl}/chat`;
+		const response = await Fetch.get(url).catch((error) => {
+			console.error('Error:', error);
+			throw new Error('Failed to fetch messages');
+		});
+		return response;
+	}
+
 	async sendMessage(message: string): Promise<any> {
 		const url = `${this.backendUrl}/chat`;
 		const body = JSON.stringify({ message });

@@ -2,14 +2,28 @@ from models.tools import ToolType
 from services.llm_service import LLMService
 from services.tool_manager import ToolManager
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from models.chat import ChatRequest, ChatResponse, ChatRole
 
 load_dotenv()
 
-app = FastAPI()
 llm = LLMService()
 tool_manager = ToolManager()
+app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
@@ -25,7 +39,7 @@ async def chat(request: ChatRequest):
     
     return ChatResponse(role=ChatRole.MODEL, type=response_type, message=response_message)
 
-@app.get("/chat/history", response_model=list[ChatResponse])
+@app.get("/chat", response_model=list[ChatResponse])
 async def get_chat_history():
     try:
         history = llm.get_history()
