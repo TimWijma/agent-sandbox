@@ -1,6 +1,7 @@
 from asteval import Interpreter
 from tools.base import BaseTool
 import math
+from logger import logger
 
 class CalculatorTool(BaseTool):
     def __init__(self):
@@ -11,16 +12,13 @@ class CalculatorTool(BaseTool):
         return self.calculate(input)
 
     def calculate(self, expression: str) -> str:
-        print(f"Calculating expression: {expression}")
-        print("-" * 20)
+        logger.info(f"Calculating expression: {expression}")
 
         result = self.aeval(expression)
         if self.aeval.error:
-            print(f"Error calculating expression: {self.aeval.error}")
-            print("-" * 20)
+            logger.error(f"Error calculating expression: {self.aeval.error}")
             return f"Error: {self.aeval.error}"
         
-        print(f"Result: {result}")
-        print("-" * 20)
+        logger.info(f"Result: {result}")
 
         return str(result)
