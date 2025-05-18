@@ -4,7 +4,7 @@ from services.tool_manager import ToolManager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from models.chat import ChatRequest, ChatResponse, ChatRole
+from models.chat import ChatRequest, Message, ChatRole
 
 load_dotenv()
 
@@ -25,7 +25,7 @@ app.add_middleware(
 )
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat", response_model=Message)
 async def chat(request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
@@ -37,13 +37,13 @@ async def chat(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    return ChatResponse(role=ChatRole.MODEL, type=response_type, message=response_message)
+    return Message(role=ChatRole.MODEL, type=response_type, message=response_message)
 
-@app.get("/chat", response_model=list[ChatResponse])
+@app.get("/chat", response_model=list[Message])
 async def get_chat_history():
     try:
         history = llm.get_history()
-        return [ChatResponse(role=role, message=message, type=ToolType.GENERAL) for role, message in history]
+        return [Message(role=role, message=message, type=ToolType.GENERAL) for role, message in history]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

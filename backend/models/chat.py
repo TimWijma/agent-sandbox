@@ -7,10 +7,22 @@ class ChatRole(str, Enum):
     MODEL = "model"
     SYSTEM = "system"
 
+class Conversation(BaseModel):
+    id: str
+    title: str
+    messages: list[dict]
+    created_at: str
+    updated_at: str
+
 class ChatRequest(BaseModel):
     message: str
 
-class ChatResponse(BaseModel):
+class Message(BaseModel):
     role: ChatRole
     type: ToolType
     message: str
+
+# class MessageContent(BaseModel):
+#     type: ToolType
+#     original_message: str
+#     content: str
