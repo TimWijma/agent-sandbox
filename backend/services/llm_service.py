@@ -25,7 +25,7 @@ class LLMService:
             temperature=0.5
         )
 
-        self.chats = dict[int, Chat] = {}
+        self.chats: dict[int, Chat] = {}
 
         logger.info("LLMService initialized with model: %s", self.model)
 

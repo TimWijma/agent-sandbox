@@ -27,8 +27,41 @@ app.add_middleware(
 )
 
 @app.get("/chat", response_model=list[Conversation])
+async def get_chats():
+    try:
+        result = []
+        for conversation in conversations.values():
+            result.append({
+                "id": conversation.id,
+                "title": conversation.title,
+                "messages": [],
+                "created_at": conversation.created_at,
+                "updated_at": conversation.updated_at,
+            })
 
-@app.post("/chat/{conversation_id}", response_model=Message)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat", response_model=Conversation)
+async def create_chat():
+    try:
+        conversation_id = len(conversations) + 1
+        conversation = Conversation(
+            id=conversation_id,
+            title=f"New Conversation {conversation_id}",
+            messages=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        conversations[conversation_id] = conversation
+
+        return conversation
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/chat/{conversation_id}/messages", response_model=Message)
 async def chat(conversation_id: int, request: ChatRequest):
     if not request.message:
         raise HTTPException(status_code=400, detail="Message cannot be empty.")
@@ -48,7 +81,7 @@ async def chat(conversation_id: int, request: ChatRequest):
     messages.append(user_message)
 
     try:
-        llm_response = llm.send_message(request.message)
+        llm_response = llm.send_message(conversation_id, request.message)
         tool_type, tool_output = tool_manager.handle_message(llm_response)
 
         model_message = Message(
@@ -65,33 +98,14 @@ async def chat(conversation_id: int, request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    return Message(role=ChatRole.MODEL, type=tool_type, message=tool_output)
+    return model_message
     
-@app.get("/chat/{conversation_id}", response_model=list[Message])
+@app.get("/chat/{conversation_id}", response_model=Conversation)
 async def get_chat_history(conversation_id: int):
     try:
         if conversation_id not in conversations:
             raise HTTPException(status_code=404, detail="Conversation not found.")
         
-        messages = conversations.get(conversation_id).messages
-        return messages
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/chat/new", response_model=Conversation)
-async def create_chat():
-    try:
-        conversation_id = len(conversations) + 1
-        conversation = Conversation(
-            id=conversation_id,
-            title=f"New Conversation {conversation_id}",
-            messages=[],
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
-        )
-
-        conversations[conversation_id] = conversation
-
-        return conversation
+        return conversations.get(conversation_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

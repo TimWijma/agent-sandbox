@@ -1,15 +1,12 @@
 <script lang="ts">
+	import type { Message } from '$lib/DTO/Message';
 	import hljs from 'highlight.js/lib/core';
 	import python from 'highlight.js/lib/languages/python';
 	import 'highlight.js/styles/github.css';
 
 	hljs.registerLanguage('python', python);
 
-	export let message: {
-		role: 'user' | 'model';
-		message: string;
-		type: 'general' | 'calculator' | 'file';
-	};
+	export let message: Message;
 
 	const highlightCode = (code: string, language: string) => {
 		if (code.startsWith('```python\n')) {
@@ -40,9 +37,9 @@
 		class:text-white={message.role === 'user'}
 	>
 		{#if message.type === 'file'}
-			{@html highlightCode(message.message, 'python')}
+			{@html highlightCode(message.content, 'python')}
 		{:else}
-			{message.message}
+			{message.content}
 		{/if}
 	</div>
 </div>
