@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel
 from models.tools import ToolType
 from enum import Enum
@@ -8,19 +9,23 @@ class ChatRole(str, Enum):
     SYSTEM = "system"
 
 class Conversation(BaseModel):
-    id: str
+    id: int
     title: str
     messages: list[dict]
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
 class ChatRequest(BaseModel):
     message: str
 
 class Message(BaseModel):
-    role: ChatRole
+    id: int
+    conversation_id: int
+    content: str
     type: ToolType
-    message: str
+    role: ChatRole
+    created_at: datetime
+    original_message: str | None = None
 
 # class MessageContent(BaseModel):
 #     type: ToolType

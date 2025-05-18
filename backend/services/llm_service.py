@@ -1,5 +1,6 @@
 from google import genai
 from google.genai import types
+from google.genai.chats import Chat
 import os
 from logger import logger
 
@@ -24,38 +25,30 @@ class LLMService:
             temperature=0.5
         )
 
-        self.chat = self.client.chats.create(
-            model=self.model,
-            config = self.config
-        )
+        self.chats = dict[int, Chat] = {}
 
         logger.info("LLMService initialized with model: %s", self.model)
 
-    def create_chat(self):
-        self.chat = self.client.chats.create(
+    def create_chat(self, conversation_id: int):
+        chat = self.client.chats.create(
             model=self.model,
             config=self.config
         )
-        logger.info("New chat created with model: %s", self.model)
+        self.chats[conversation_id] = chat
+        logger.info("New chat created for conversation_id=%s with model: %s", conversation_id, self.model)
 
-    def send_message(self, user_message: str) -> str:
+    def send_message(self, conversation_id: int, user_message: str) -> str:
         user_message = user_message.strip()
         if not user_message:
             raise ValueError("User message cannot be empty.")
         
+        if conversation_id not in self.chats:
+            self.create_chat(conversation_id)
+
+        chat: Chat = self.chats[conversation_id]
+
         logger.info("User message sent: %s", user_message)
-        response = self.chat.send_message(user_message)
+        response = chat.send_message(user_message)
         logger.info("Response received: %s", response.text)
         
         return response.text
-    
-    def get_history(self) -> list[str]:
-        history = self.chat.get_history() or []
-
-        return [(msg.role, msg.parts[0].text) for msg in history if msg.parts]
-    
-    def clear_history(self):
-        self.create_chat()
-        logger.info("Chat history cleared.")
-
-        return True

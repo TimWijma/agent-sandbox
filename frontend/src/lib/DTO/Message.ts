@@ -23,8 +23,8 @@ export enum Role {
 // }
 
 export class Message {
-	id: string;
-	conversationId: string;
+	id: number;
+	conversationId: number;
 	content: string;
 	type: MessageType;
 	role: Role;
@@ -32,8 +32,8 @@ export class Message {
 	originalMessage?: string;
 
 	constructor(
-		id: string,
-		conversationId: string,
+		id: number,
+		conversationId: number,
 		content: string,
 		type: MessageType,
 		role: Role,
@@ -43,7 +43,7 @@ export class Message {
 		this.id = id;
 		this.conversationId = conversationId;
 		this.content = content;
-		this.type = MessageType.General;
+		this.type = type;
 		this.role = role;
 		this.createdAt = createdAt;
 		this.originalMessage = originalMessage;

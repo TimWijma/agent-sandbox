@@ -17,7 +17,7 @@ class ToolManager:
 
         logger.info("ToolManager initialized with tools: %s", list(self.tool_registry.keys()))
 
-    def parse_message(self, message: str) -> Optional[tuple[ToolType, str]]:
+    def parse_message(self, message: str) -> Optional[tuple[ToolType, str, str]]:
         match = self.TOOL_PATTERN.match(message)
         if not match:
             return None
@@ -32,7 +32,7 @@ class ToolManager:
         if tool_type not in self.tool_registry:
             raise ValueError(f"Tool '{tool_type}' not found in registry.")
 
-        return tool_type, tool_input
+        return tool_type, tool_input, message
     
     def execute_tool(self, tool_type: ToolType, tool_input: str) -> str:
         if tool_type not in self.tool_registry:
