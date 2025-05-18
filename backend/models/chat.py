@@ -8,12 +8,7 @@ class ChatRole(str, Enum):
     MODEL = "model"
     SYSTEM = "system"
 
-class Conversation(BaseModel):
-    id: int
-    title: str
-    messages: list[dict]
-    created_at: datetime
-    updated_at: datetime
+
 
 class ChatRequest(BaseModel):
     message: str
@@ -26,6 +21,13 @@ class Message(BaseModel):
     role: ChatRole
     created_at: datetime
     original_message: str | None = None
+
+class Conversation(BaseModel):
+    id: int
+    title: str
+    messages: list[Message]
+    created_at: datetime
+    updated_at: datetime
 
 # class MessageContent(BaseModel):
 #     type: ToolType

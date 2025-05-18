@@ -5,14 +5,14 @@ from services.tool_manager import ToolManager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from models.chat import ChatRequest, Message, ChatRole
+from models.chat import ChatRequest, Message, ChatRole, Conversation
 
 load_dotenv()
 
 llm = LLMService()
 tool_manager = ToolManager()
 app = FastAPI()
-conversations: dict[int, list[Message]] = {}
+conversations: dict[int, Conversation] = {}
 
 origins = [
     "http://localhost:5173",
@@ -26,6 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/chat", response_model=list[Conversation])
+
 @app.post("/chat/{conversation_id}", response_model=Message)
 async def chat(conversation_id: int, request: ChatRequest):
     if not request.message:
@@ -33,7 +35,7 @@ async def chat(conversation_id: int, request: ChatRequest):
     if conversation_id not in conversations:
         raise HTTPException(status_code=404, detail="Conversation not found.")
     
-    messages = conversations[conversation_id]
+    messages = conversations.get(conversation_id).messages
     
     user_message = Message(
         id=len(messages),
@@ -71,16 +73,25 @@ async def get_chat_history(conversation_id: int):
         if conversation_id not in conversations:
             raise HTTPException(status_code=404, detail="Conversation not found.")
         
-        messages = conversations[conversation_id]
+        messages = conversations.get(conversation_id).messages
         return messages
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/chat/new", response_model=int)
+@app.post("/chat/new", response_model=Conversation)
 async def create_chat():
     try:
         conversation_id = len(conversations) + 1
-        conversations[conversation_id] = []
-        return conversation_id
+        conversation = Conversation(
+            id=conversation_id,
+            title=f"New Conversation {conversation_id}",
+            messages=[],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+
+        conversations[conversation_id] = conversation
+
+        return conversation
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
