@@ -37,7 +37,7 @@ export class ChatManager {
 	}
 
 	async sendMessage(conversation_id: number, message: string): Promise<any> {
-		const url = `${this.backendUrl}/chat/${conversation_id}/message`;
+		const url = `${this.backendUrl}/chat/${conversation_id}/messages`;
 		const body = JSON.stringify({ message });
 
 		const response = await Fetch.post(url, body).catch((error) => {

@@ -1,4 +1,3 @@
-import { Conversation } from '$lib/DTO/Conversation.js';
 import { Fetch } from '$lib/scripts/Fetch';
 import { BACKEND_URL } from '$lib/stores/globalStore.js';
 import { get } from 'svelte/store';

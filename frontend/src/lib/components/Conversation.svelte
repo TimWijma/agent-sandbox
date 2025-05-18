@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Message from '$lib/components/Message.svelte';
+	import { Message as MessageDTO, MessageType, Role } from '$lib/DTO/Message';
 	import type { Conversation } from '$lib/DTO/Conversation';
 	import { chatManager } from '$lib/stores/globalStore';
 	import { Button } from './ui/button';
@@ -15,6 +16,16 @@
 
 		let message = newMessage;
 		newMessage = '';
+
+		let userMessage = new MessageDTO(
+			-1,
+			conversation.id,
+			message,
+			MessageType.General,
+			Role.User,
+			new Date()
+		);
+		messages = [...messages, userMessage];
 
 		await chatManager
 			.sendMessage(conversation.id, message)

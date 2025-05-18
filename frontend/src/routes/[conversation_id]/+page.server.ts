@@ -1,6 +1,4 @@
-import { Conversation } from '$lib/DTO/Conversation.js';
-import { Fetch } from '$lib/scripts/Fetch';
-import { BACKEND_URL } from '$lib/stores/globalStore.js';
+import { BACKEND_URL, chatManager } from '$lib/stores/globalStore.js';
 import { get } from 'svelte/store';
 
 export async function load({ params }) {
@@ -9,15 +7,15 @@ export async function load({ params }) {
 	const url = `${get(BACKEND_URL)}/chat/${conversation_id}`;
 
 	try {
-		const response = await Fetch.get(url);
+		const response = await chatManager.getConversation(conversation_id);
 
 		return {
 			conversation: {
 				id: response.id,
-				name: response.name,
+				title: response.title,
 				messages: response.messages,
-				created_at: response.created_at,
-				updated_at: response.updated_at
+				createdAt: response.created_at,
+				updatedAt: response.updated_at
 			}
 		};
 	} catch (error) {
