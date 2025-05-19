@@ -1,30 +1,21 @@
 <script lang="ts">
 	import '../app.css';
-	import { Conversation as ConversationDTO } from '$lib/DTO/Conversation.js';
+
+	import { ConversationDTO as ConversationDTO } from '$lib/DTO/Conversation.js';
 	import { Button } from '$lib/components/ui/button';
 	import { chatManager } from '$lib/stores/globalStore';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { Plus } from '@lucide/svelte';
 
 	let { data, children } = $props();
-	let conversations: ConversationDTO[] = $state([]);
-
-	onMount(() => {
-		conversations = data.conversations.map((conversation) => {
-			return new ConversationDTO(
-				conversation.id,
-				conversation.title,
-				conversation.messages,
-				conversation.createdAt,
-				conversation.updatedAt
-			);
-		});
-	});
+	let conversations = $derived(data.conversations);
 
 	const createConversation = async () => {
 		await chatManager
 			.createConversation()
 			.then((response) => {
+				conversations = [...conversations, response];
+				goto(`/${response.id}`, { invalidateAll: true });
 				console.log('Conversation created:', response);
 			})
 			.catch((error) => {
@@ -39,11 +30,11 @@
 
 <div class="grid h-screen grid-cols-[250px_1fr] grid-rows-[auto_1fr] overflow-hidden">
 	<aside class="row-span-2 overflow-y-auto border-r border-gray-200 bg-gray-100 p-4">
-		<Button variant="ghost" aria-label="Menu" class="w-full" on:click={createConversation}>
-			New Conversation
+		<Button aria-label="Menu" class="w-full" on:click={createConversation}>
+			<Plus /> New Conversation
 		</Button>
 		<nav>
-			<ul class="space-y-4 text-gray-700">
+			<ul class="mt-4 space-y-2 text-gray-700">
 				{#each conversations as conversation}
 					<li>
 						<Button

@@ -1,17 +1,17 @@
 import { Message } from './Message';
 
-export class Conversation {
+export class ConversationDTO {
 	id: number;
 	title: string;
 	messages: Message[];
-	createdAt: Date;
-	updatedAt: Date;
+	created_at: Date;
+	updated_at: Date;
 
-	constructor(id: number, title: string, messages: Message[], createdAt: Date, updatedAt: Date) {
+	constructor(id: number, title: string, messages: Message[], created_at: Date, updated_at: Date) {
 		this.id = id;
 		this.title = title;
 		this.messages = messages;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
+		this.created_at = created_at;
+		this.updated_at = updated_at;
 	}
 }

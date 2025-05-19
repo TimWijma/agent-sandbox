@@ -10,42 +10,30 @@ export enum Role {
 	Model = 'model'
 }
 
-// export class MessageContent {
-// 	type: MessageType;
-// 	originalMessage: string;
-// 	content: string;
-
-// 	constructor(type: MessageType, originalText: string, result: string) {
-// 		this.type = type;
-// 		this.originalMessage = originalText;
-// 		this.content = result;
-// 	}
-// }
-
 export class Message {
 	id: number;
-	conversationId: number;
+	conversation_id: number;
 	content: string;
 	type: MessageType;
 	role: Role;
-	createdAt: Date;
-	originalMessage?: string;
+	created_at: Date;
+	original_message?: string;
 
 	constructor(
 		id: number,
-		conversationId: number,
+		conversation_id: number,
 		content: string,
 		type: MessageType,
 		role: Role,
-		createdAt: Date,
-		originalMessage?: string
+		created_at: Date,
+		original_message?: string
 	) {
 		this.id = id;
-		this.conversationId = conversationId;
+		this.conversation_id = conversation_id;
 		this.content = content;
 		this.type = type;
 		this.role = role;
-		this.createdAt = createdAt;
-		this.originalMessage = originalMessage;
+		this.created_at = created_at;
+		this.original_message = original_message;
 	}
 }

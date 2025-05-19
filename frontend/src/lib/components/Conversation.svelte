@@ -1,12 +1,12 @@
 <script lang="ts">
 	import Message from '$lib/components/Message.svelte';
 	import { Message as MessageDTO, MessageType, Role } from '$lib/DTO/Message';
-	import type { Conversation } from '$lib/DTO/Conversation';
+	import type { ConversationDTO } from '$lib/DTO/Conversation';
 	import { chatManager } from '$lib/stores/globalStore';
 	import { Button } from './ui/button';
 	import { Input } from './ui/input';
 
-	export let conversation: Conversation;
+	export let conversation: ConversationDTO;
 	let messages = conversation.messages;
 
 	let newMessage = '';
