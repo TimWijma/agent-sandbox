@@ -1,10 +1,7 @@
-import { BACKEND_URL, chatManager } from '$lib/stores/globalStore.js';
-import { get } from 'svelte/store';
+import { chatManager } from '$lib/stores/globalStore.js';
 
 export async function load({ params }) {
 	const { conversation_id } = params;
-
-	const url = `${get(BACKEND_URL)}/chat/${conversation_id}`;
 
 	try {
 		const response = await chatManager.getConversation(conversation_id);

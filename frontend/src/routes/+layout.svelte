@@ -10,8 +10,6 @@
 	let conversations: ConversationDTO[] = $state([]);
 
 	onMount(() => {
-		console.log('Data:', data);
-
 		conversations = data.conversations.map((conversation) => {
 			return new ConversationDTO(
 				conversation.id,
@@ -21,8 +19,6 @@
 				conversation.updatedAt
 			);
 		});
-
-		console.log('Conversations:', conversations);
 	});
 
 	const createConversation = async () => {
@@ -35,6 +31,10 @@
 				console.error('Error creating conversation:', error);
 			});
 	};
+
+	const openConversation = (conversationId: number) => {
+		goto(`/${conversationId}`, { invalidateAll: true });
+	};
 </script>
 
 <div class="grid h-screen grid-cols-[250px_1fr] grid-rows-[auto_1fr] overflow-hidden">
@@ -46,7 +46,11 @@
 			<ul class="space-y-4 text-gray-700">
 				{#each conversations as conversation}
 					<li>
-						<Button variant="ghost" class="w-full" on:click={() => goto(`/${conversation.id}`)}>
+						<Button
+							variant="ghost"
+							class="w-full"
+							on:click={() => openConversation(conversation.id)}
+						>
 							{conversation.title}
 						</Button>
 					</li>

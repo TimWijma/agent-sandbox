@@ -7,7 +7,6 @@ export async function load() {
 
 	try {
 		const response = await Fetch.get(url);
-		console.log('Response:', response);
 
 		return {
 			conversations: response.map((conv) => {
