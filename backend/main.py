@@ -109,3 +109,14 @@ async def get_chat_history(conversation_id: int):
         return conversations.get(conversation_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/chat/{conversation_id}")
+async def delete_chat(conversation_id: int):
+    try:
+        if conversation_id not in conversations:
+            raise HTTPException(status_code=404, detail="Conversation not found.")
+        
+        del conversations[conversation_id]
+        return {"detail": "Conversation deleted successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

@@ -47,4 +47,15 @@ export class ChatManager {
 
 		return response;
 	}
+
+	async deleteConversation(conversationId: number): Promise<any> {
+		const url = `${this.backendUrl}/chat/${conversationId}`;
+
+		const response = await Fetch.delete(url).catch((error) => {
+			console.error('Error:', error);
+			throw new Error('Failed to delete conversation');
+		});
+
+		return response;
+	}
 }
