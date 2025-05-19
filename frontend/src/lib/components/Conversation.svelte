@@ -5,6 +5,7 @@
 	import { chatManager } from '$lib/stores/globalStore';
 	import { Button } from './ui/button';
 	import { Input } from './ui/input';
+	import { SendHorizontal } from '@lucide/svelte';
 
 	export let conversation: ConversationDTO;
 	let messages = conversation.messages;
@@ -46,5 +47,8 @@
 
 <div class="flex items-center border-t border-gray-200 p-4">
 	<Input bind:value={newMessage} placeholder="Type your message here..." />
-	<Button class="ml-2" on:click={sendMessage}>Send</Button>
+	<Button class="ml-2" on:click={sendMessage}>
+		Send
+		<SendHorizontal class="ml-2" />
+	</Button>
 </div>

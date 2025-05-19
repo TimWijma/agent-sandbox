@@ -6,6 +6,7 @@
 	import { chatManager } from '$lib/stores/globalStore';
 	import { goto } from '$app/navigation';
 	import { Plus } from '@lucide/svelte';
+	import MenuItem from '$lib/components/MenuItem.svelte';
 
 	let { data, children } = $props();
 	let conversations = $derived(data.conversations);
@@ -22,29 +23,17 @@
 				console.error('Error creating conversation:', error);
 			});
 	};
-
-	const openConversation = (conversationId: number) => {
-		goto(`/${conversationId}`, { invalidateAll: true });
-	};
 </script>
 
 <div class="grid h-screen grid-cols-[250px_1fr] grid-rows-[auto_1fr] overflow-hidden">
 	<aside class="row-span-2 overflow-y-auto border-r border-gray-200 bg-gray-100 p-4">
 		<Button aria-label="Menu" class="w-full" on:click={createConversation}>
-			<Plus /> New Conversation
+			<Plus class="mr-2" /> New Conversation
 		</Button>
 		<nav>
 			<ul class="mt-4 space-y-2 text-gray-700">
 				{#each conversations as conversation}
-					<li>
-						<Button
-							variant="ghost"
-							class="w-full"
-							on:click={() => openConversation(conversation.id)}
-						>
-							{conversation.title}
-						</Button>
-					</li>
+					<MenuItem {conversation} />
 				{/each}
 			</ul>
 		</nav>
