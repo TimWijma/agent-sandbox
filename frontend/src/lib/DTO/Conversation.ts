@@ -1,13 +1,19 @@
-import { Message } from './Message';
+import { MessageDTO } from './Message';
 
 export class ConversationDTO {
 	id: number;
 	title: string;
-	messages: Message[];
+	messages: MessageDTO[];
 	created_at: Date;
 	updated_at: Date;
 
-	constructor(id: number, title: string, messages: Message[], created_at: Date, updated_at: Date) {
+	constructor(
+		id: number,
+		title: string,
+		messages: MessageDTO[],
+		created_at: Date,
+		updated_at: Date
+	) {
 		this.id = id;
 		this.title = title;
 		this.messages = messages;

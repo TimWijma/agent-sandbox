@@ -10,7 +10,7 @@ export enum Role {
 	Model = 'model'
 }
 
-export class Message {
+export class MessageDTO {
 	id: number;
 	conversation_id: number;
 	content: string;

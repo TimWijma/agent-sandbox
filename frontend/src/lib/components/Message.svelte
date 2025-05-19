@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Message } from '$lib/DTO/Message';
+	import type { MessageDTO } from '$lib/DTO/Message';
 	import hljs from 'highlight.js/lib/core';
 	import python from 'highlight.js/lib/languages/python';
 	import 'highlight.js/styles/github.css';
 
 	hljs.registerLanguage('python', python);
 
-	export let message: Message;
+	export let message: MessageDTO;
 
 	const highlightCode = (code: string, language: string) => {
 		if (code.startsWith('```python\n')) {
@@ -16,11 +16,8 @@
 			code = code.slice(0, -'\n```'.length);
 		}
 
-		console.log(`Highlighting code: ${code} with language: ${language}`);
-
 		if (language === 'python') {
 			let value = hljs.highlight(code, { language }).value;
-			console.log(`Highlighted code: ${value}`);
 
 			return value;
 		}

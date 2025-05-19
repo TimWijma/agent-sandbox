@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Message from '$lib/components/Message.svelte';
-	import { Message as MessageDTO, MessageType, Role } from '$lib/DTO/Message';
+	import { MessageDTO, MessageType, Role } from '$lib/DTO/Message';
 	import type { ConversationDTO } from '$lib/DTO/Conversation';
 	import { chatManager } from '$lib/stores/globalStore';
 	import { Button } from './ui/button';
