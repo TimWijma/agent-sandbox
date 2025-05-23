@@ -6,6 +6,7 @@ from enum import Enum
 class ChatRole(str, Enum):
     USER = "user"
     MODEL = "model"
+    ASSISTANT = "assistant"
     SYSTEM = "system"
 
 
@@ -15,7 +16,6 @@ class ChatRequest(BaseModel):
 
 class Message(BaseModel):
     id: int
-    conversation_id: int
     content: str
     type: ToolType
     role: ChatRole
