@@ -8,8 +8,6 @@ class ChatRole(str, Enum):
     ASSISTANT = "assistant"
     SYSTEM = "system"
 
-
-
 class ChatRequest(BaseModel):
     message: str
 
