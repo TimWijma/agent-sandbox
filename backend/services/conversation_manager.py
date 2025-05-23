@@ -1,7 +1,8 @@
 import os
 import json
 from typing import Optional
-from models.chat import Conversation
+from models.chat import Conversation, Message, ToolType, ChatRole
+from datetime import datetime
 from logger import logger
 
 class ConversationManager:
@@ -47,6 +48,28 @@ class ConversationManager:
         except (ValueError, json.JSONDecodeError) as e:
             logger.info(f"Error loading conversation from {file_path}: {e}")
             return None
+
+    def create_conversation(self) -> Conversation:
+        conversation_id = self.conversation_manager.get_next_conversation_id()
+
+        system_message = Message(
+            id=0,
+            content=self.system_prompt,
+            type=ToolType.GENERAL,
+            role=ChatRole.SYSTEM,
+            created_at=datetime.now()
+        )
+
+        conversation = Conversation(
+            id=conversation_id,
+            title=f"New Conversation {conversation_id}",
+            messages=[system_message],
+            created_at=datetime.now(),
+            updated_at=datetime.now(),
+        )
+        
+        self.save_conversation(conversation)
+        return conversation
 
     def save_conversation(self, conversation: Conversation):
         if not conversation or not conversation.id:

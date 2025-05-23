@@ -5,7 +5,6 @@ from enum import Enum
 
 class ChatRole(str, Enum):
     USER = "user"
-    MODEL = "model"
     ASSISTANT = "assistant"
     SYSTEM = "system"
 
