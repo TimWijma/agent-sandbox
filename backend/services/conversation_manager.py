@@ -47,9 +47,13 @@ class ConversationManager:
                         
                 except (ValueError, json.JSONDecodeError) as e:
                     logger.info(f"Error loading conversation from {filename}: {e}")
+
+        conversations = dict(sorted(conversations.items(), key=lambda item: item[0]))
+        logger.info(f"Loaded {len(conversations)} conversations.")
+
         return conversations
 
-    def load_conversation(self, conversation_id: int, include_system_message) -> Optional[Conversation]:
+    def load_conversation(self, conversation_id: int, include_system_message = True) -> Optional[Conversation]:
         file_path = self._get_conversation_file_path(conversation_id)
         if not os.path.exists(file_path):
             logger.info(f"Conversation file {file_path} does not exist.")
@@ -107,6 +111,7 @@ class ConversationManager:
                 for message in conversation_json["messages"]:
                     message["created_at"] = message["created_at"].isoformat()
                 json.dump(conversation_json, file, indent=4)
+                logger.info(f"Conversation {conversation.id} saved to {file_path}.")
         except IOError as e:
             logger.info(f"Error saving conversation to {file_path}: {e}")
 

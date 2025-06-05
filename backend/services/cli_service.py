@@ -19,8 +19,7 @@ class CLIService:
         self.messages = []
         
         self.mode = "selection"
-        
-        self.load_conversations()
+
         self.setup_ui()
         
     def switch_mode(self, mode: str):
@@ -38,9 +37,6 @@ class CLIService:
             if hasattr(self, 'input_buffer'):
                 self.app.layout.focus(self.input_buffer)
 
-    def load_conversations(self):
-        self.conversations = self.llm_service.load_conversations()
-        
     def create_layout(self):
         windows = [
             Window(
@@ -77,7 +73,7 @@ class CLIService:
                 
                 if line_text.strip() and not line_text.startswith("Conversations:"):
                     try:
-                        first_char = line_text.strip('.')[0].strip()
+                        first_char = line_text.split('.')[0].strip()
                         if first_char == '+':
                             self.create_new_conversation()
                         else:
@@ -93,12 +89,7 @@ class CLIService:
                         return
                 
             elif self.mode == "conversation":
-                message = self.input_buffer.text.strip()
-                if message:
-                    timestamp = datetime.now().strftime("%H:%M:%S")
-                    self.messages.append(f"[{timestamp}] You: {message}")
-                    self.input_buffer.text = ""
-                    self.update_message_display()
+                self.send_message()
                 
         @kb.add('c-c')
         def exit_app(event):
@@ -146,6 +137,8 @@ class CLIService:
         self.app.invalidate()
         
     def update_selection_display(self):
+        self.load_conversations()
+        
         formatted_text = "Conversations:\n"
         for idx, conv in self.conversations.items():
             formatted_text += f"{idx}. {conv.title} (Created: {conv.created_at})\n"
@@ -158,6 +151,10 @@ class CLIService:
         )
         
         self.app.invalidate()
+
+    def load_conversations(self):
+        logger.info("Loading conversations")
+        self.conversations = self.llm_service.load_conversations()
 
     def open_conversation(self, conversation_id):
         """Open an existing conversation by ID"""
@@ -173,6 +170,19 @@ class CLIService:
         
         self.open_conversation(new_conversation_id)
         logger.info(f"Created new conversation {new_conversation_id}")
+
+    def send_message(self):
+        message = self.input_buffer.text.strip()
+        if message:
+            self.messages.append(f"You: {message}")
+            self.input_buffer.text = ""
+            self.update_message_display()
+            
+            response_message = self.llm_service.send_message(self.conversation.id, message)
+
+            self.messages.append(f"Assistant: {response_message.content}")
+
+            self.update_message_display()
 
     def get_current_line_text(self):
         """Get the text of the line where the cursor is currently positioned"""

@@ -43,13 +43,27 @@ class LLMService:
         return conversation
 
     def send_message(self, conversation_id: int, user_message: str) -> Message:
-        # user_message = user_message.strip()
-        # if not user_message:
-        #     raise ValueError("User message cannot be empty.")
+        user_message = user_message.strip()
+        if not user_message:
+            logger.error("User message cannot be empty.")
+            raise ValueError("User message cannot be empty.")
 
         conversation = self.conversation_manager.load_conversation(conversation_id)
         if not conversation:
+            logger.error(f"Conversation with ID {conversation_id} not found.")
             raise ValueError(f"Conversation with ID {conversation_id} not found.")
+
+        user_message = Message(
+            id=len(conversation.messages),
+            content=user_message,
+            type=ToolType.GENERAL,
+            role=ChatRole.USER,
+            created_at=datetime.now()
+        )
+        logger.info(f"User message: {user_message.content}")
+
+        conversation.messages.append(user_message)
+        self.conversation_manager.save_conversation(conversation)
 
         conversation_messages = [
             {
@@ -70,6 +84,7 @@ class LLMService:
 
         # Extract the model response
         model_response = response.choices[0].message.content
+        model_response = model_response.strip()
         model_message = Message(
             id=len(conversation.messages),
             content=model_response,
