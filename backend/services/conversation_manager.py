@@ -6,10 +6,24 @@ from datetime import datetime
 from logger import logger
 
 class ConversationManager:
-    def __init__(self):
+    def __init__(self, system_message_path):
         self.CONVERSATION_DIR = "conversations"
-
         self._create_conversation_dir()
+        
+        self.system_message_path = system_message_path
+        self.system_message = None
+
+    def _load_system_message(self):
+        if not os.path.exists(self.system_message_path):
+            raise ValueError(f"System message file not found at {self.system_message_path}.")
+        if not os.path.isfile(self.system_message_path):
+            raise ValueError(f"System message path is not a file: {self.system_message_path}.")
+        
+        with open(self.system_message_path, "r") as file:
+            self.system_message = file.read().strip()
+        
+        if not self.system_message:
+            raise ValueError("System message is empty.")
 
     def _create_conversation_dir(self):
         os.makedirs(self.CONVERSATION_DIR, exist_ok=True)
@@ -35,7 +49,7 @@ class ConversationManager:
                     logger.info(f"Error loading conversation from {filename}: {e}")
         return conversations
 
-    def load_conversation(self, conversation_id: int) -> Optional[Conversation]:
+    def load_conversation(self, conversation_id: int, include_system_message) -> Optional[Conversation]:
         file_path = self._get_conversation_file_path(conversation_id)
         if not os.path.exists(file_path):
             logger.info(f"Conversation file {file_path} does not exist.")
@@ -44,17 +58,25 @@ class ConversationManager:
             with open(file_path, "r") as file:
                 conversation_data = json.load(file)
                 conversation = Conversation.model_validate(conversation_data)
+
+                # Remove system message if not needed
+                if not include_system_message:
+                    conversation.messages = [msg for msg in conversation.messages if msg.role != ChatRole.SYSTEM]
+                
                 return conversation
         except (ValueError, json.JSONDecodeError) as e:
             logger.info(f"Error loading conversation from {file_path}: {e}")
             return None
 
     def create_conversation(self) -> Conversation:
-        conversation_id = self.conversation_manager.get_next_conversation_id()
+        if not self.system_message:
+            self._load_system_message()
+
+        conversation_id = self.get_next_conversation_id()
 
         system_message = Message(
             id=0,
-            content=self.system_prompt,
+            content=self.system_message,
             type=ToolType.GENERAL,
             role=ChatRole.SYSTEM,
             created_at=datetime.now()

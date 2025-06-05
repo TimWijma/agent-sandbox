@@ -13,23 +13,17 @@ api_key = os.getenv("GEMINI_API_KEY")
 os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
 
 class LLMService:
-    def __init__(self, model: str = "gemini/gemini-2.0-flash", system_prompt_path: str = "prompts/system_message.txt"):
+    def __init__(self, model: str = "gemini/gemini-2.0-flash", system_message_path: str = "prompts/system_message.txt"):
         self.API_KEY = os.getenv("GEMINI_API_KEY")
         if not self.API_KEY:
             raise ValueError("API key not found. Please set the GEMINI_API_KEY environment variable.")
         os.environ["GEMINI_API_KEY"] = self.API_KEY
 
         self.model = model
-        if not os.path.exists(system_prompt_path):
-            raise ValueError(f"System prompt file not found at {system_prompt_path}.")
-        if not os.path.isfile(system_prompt_path):
-            raise ValueError(f"System prompt path is not a file: {system_prompt_path}.")
-        
-        self.system_prompt = open(system_prompt_path, "r").read()
 
-        self.conversation_manager = ConversationManager()
+        self.conversation_manager = ConversationManager(system_message_path=system_message_path)
 
-    def load_conversations(self):
+    def load_conversations(self) -> dict[int, Conversation]:
         conversations = self.conversation_manager.load_all_conversations()
         if not conversations:
             raise ValueError("No conversations found.")
@@ -41,7 +35,9 @@ class LLMService:
         return conversation
 
     def load_conversation(self, conversation_id: int) -> Conversation:
-        conversation = self.conversation_manager.load_conversation(conversation_id)
+        conversation = self.conversation_manager.load_conversation(conversation_id, include_system_message=False)
+
+
         if not conversation:
             raise ValueError(f"Conversation with ID {conversation_id} not found.")
         return conversation
