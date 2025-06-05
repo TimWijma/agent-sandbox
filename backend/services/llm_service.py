@@ -3,17 +3,14 @@ from logger import logger
 from litellm import completion
 from dotenv import load_dotenv
 from services.conversation_manager import ConversationManager
-from models.chat import ChatRole, Conversation, Message, ToolType
+from models.chat import ChatRole, Message, ToolType
 from datetime import datetime
 
-load_dotenv()
-
-api_key = os.getenv("GEMINI_API_KEY")
-
-os.environ["GEMINI_API_KEY"] = os.getenv("GEMINI_API_KEY")
 
 class LLMService:
     def __init__(self, model: str = "gemini/gemini-2.0-flash", system_message_path: str = "prompts/system_message.txt"):
+        load_dotenv()
+
         self.API_KEY = os.getenv("GEMINI_API_KEY")
         if not self.API_KEY:
             raise ValueError("API key not found. Please set the GEMINI_API_KEY environment variable.")

@@ -6,8 +6,8 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.document import Document
 
-from models.chat import Conversation
 from logger import logger
+from models.chat import ChatRole, Conversation
 from services.llm_service import LLMService
 
 class CLIService:
@@ -68,26 +68,7 @@ class CLIService:
         @kb.add('enter')
         def handle_enter(event):
             if self.mode == "selection":
-                # self.handle_selection()
-                line_text = self.get_current_line_text()
-                
-                if line_text.strip() and not line_text.startswith("Conversations:"):
-                    try:
-                        first_char = line_text.split('.')[0].strip()
-                        if first_char == '+':
-                            self.create_new_conversation()
-                        else:
-                            selected_index = int(first_char)
-                            if selected_index in self.conversations:
-                                logger.info(f"Selected conversation: {selected_index}")
-                                self.open_conversation(selected_index)
-                            else:
-                                logger.error(f"Invalid selection: {line_text}")
-                                return
-                    except (ValueError, IndexError):
-                        logger.error(f"Invalid selection: {line_text}")
-                        return
-                
+                self.handle_selection()
             elif self.mode == "conversation":
                 self.send_message()
                 
@@ -123,7 +104,7 @@ class CLIService:
             self.update_message_display()
             self.app.layout.focus(self.input_buffer)
         
-    def get_formatted_messages(self):
+    def get_formatted_messages(self) -> str:
         formatted_text = "\n".join(self.messages)
         return formatted_text
 
@@ -152,10 +133,30 @@ class CLIService:
         
         self.app.invalidate()
 
+    def handle_selection(self):
+        line_text = self.get_current_line_text()
+                
+        if line_text.strip() and not line_text.startswith("Conversations:"):
+            try:
+                selected_option = line_text.split('.')[0].strip()
+                if selected_option == '+':
+                    self.create_new_conversation()
+                else:
+                    selected_id = int(selected_option)
+                    if selected_id in self.conversations:
+                        logger.info(f"Selected conversation: {selected_id}")
+                        self.open_conversation(selected_id)
+                    else:
+                        logger.error(f"Invalid selection: {line_text}")
+                        return
+            except (ValueError, IndexError):
+                logger.error(f"Invalid selection: {line_text}")
+                return
+
     def open_conversation(self, conversation_id):
         """Open an existing conversation by ID"""
-        self.conversation = self.conversation_manager.load_conversation(conversation_id, include_system_message=False)
-        self.messages = [message.content for message in self.conversation.messages]
+        self.conversation = self.conversation_manager.load_conversation(conversation_id)
+        self.messages = [msg.content for msg in self.conversation.messages if msg.role != ChatRole.SYSTEM]
         self.switch_mode("conversation")
         logger.info(f"Opened conversation {conversation_id}")
 
@@ -180,7 +181,7 @@ class CLIService:
 
             self.update_message_display()
 
-    def get_current_line_text(self):
+    def get_current_line_text(self) -> str:
         """Get the text of the line where the cursor is currently positioned"""
         document = self.view_buffer.document
         return document.current_line

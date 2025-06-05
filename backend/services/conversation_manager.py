@@ -31,7 +31,7 @@ class ConversationManager:
     def _get_conversation_file_path(self, conversation_id: int) -> str:
         return os.path.join(self.CONVERSATION_DIR, f"conversation_{conversation_id}.json")
     
-    def load_conversations(self):
+    def load_conversations(self) -> dict[int, Conversation]:
         conversations: dict[Conversation] = {}
         for filename in os.listdir(self.CONVERSATION_DIR):
             if filename.startswith("conversation_") and filename.endswith(".json"):
@@ -53,7 +53,7 @@ class ConversationManager:
 
         return conversations
 
-    def load_conversation(self, conversation_id: int, include_system_message = True) -> Optional[Conversation]:
+    def load_conversation(self, conversation_id: int) -> Optional[Conversation]:
         file_path = self._get_conversation_file_path(conversation_id)
         if not os.path.exists(file_path):
             logger.info(f"Conversation file {file_path} does not exist.")
@@ -62,10 +62,6 @@ class ConversationManager:
             with open(file_path, "r") as file:
                 conversation_data = json.load(file)
                 conversation = Conversation.model_validate(conversation_data)
-
-                # Remove system message if not needed
-                if not include_system_message:
-                    conversation.messages = [msg for msg in conversation.messages if msg.role != ChatRole.SYSTEM]
                 
                 return conversation
         except (ValueError, json.JSONDecodeError) as e:
