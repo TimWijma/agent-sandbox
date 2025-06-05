@@ -4,9 +4,7 @@ from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.formatted_text import HTML
 from prompt_toolkit.document import Document
-from datetime import datetime
 
 from models.chat import Conversation
 from logger import logger
@@ -15,6 +13,7 @@ from services.llm_service import LLMService
 class CLIService:
     def __init__(self):
         self.llm_service = LLMService()
+        self.conversation_manager = self.llm_service.conversation_manager
         self.conversation: Conversation = None
         self.messages = []
         
@@ -69,6 +68,7 @@ class CLIService:
         @kb.add('enter')
         def handle_enter(event):
             if self.mode == "selection":
+                # self.handle_selection()
                 line_text = self.get_current_line_text()
                 
                 if line_text.strip() and not line_text.startswith("Conversations:"):
@@ -137,7 +137,7 @@ class CLIService:
         self.app.invalidate()
         
     def update_selection_display(self):
-        self.load_conversations()
+        self.conversations = self.conversation_manager.load_conversations()
         
         formatted_text = "Conversations:\n"
         for idx, conv in self.conversations.items():
@@ -152,20 +152,16 @@ class CLIService:
         
         self.app.invalidate()
 
-    def load_conversations(self):
-        logger.info("Loading conversations")
-        self.conversations = self.llm_service.load_conversations()
-
     def open_conversation(self, conversation_id):
         """Open an existing conversation by ID"""
-        self.conversation = self.llm_service.load_conversation(conversation_id)
+        self.conversation = self.conversation_manager.load_conversation(conversation_id, include_system_message=False)
         self.messages = [message.content for message in self.conversation.messages]
         self.switch_mode("conversation")
         logger.info(f"Opened conversation {conversation_id}")
 
     def create_new_conversation(self):
         """Create a new conversation and switch to conversation mode"""
-        new_conversation = self.llm_service.create_conversation()
+        new_conversation = self.conversation_manager.create_conversation()
         new_conversation_id = new_conversation.id
         
         self.open_conversation(new_conversation_id)

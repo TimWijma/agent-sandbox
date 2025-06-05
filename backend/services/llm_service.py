@@ -23,24 +23,23 @@ class LLMService:
 
         self.conversation_manager = ConversationManager(system_message_path=system_message_path)
 
-    def load_conversations(self) -> dict[int, Conversation]:
-        conversations = self.conversation_manager.load_all_conversations()
-        if not conversations:
-            raise ValueError("No conversations found.")
-        return conversations
+    # def load_conversations(self) -> dict[int, Conversation]:
+    #     conversations = self.conversation_manager.load_conversations()
+    #     if not conversations:
+    #         raise ValueError("No conversations found.")
+    #     return conversations
 
-    def create_conversation(self):
-        conversation = self.conversation_manager.create_conversation()
+    # def create_conversation(self):
+    #     conversation = self.conversation_manager.create_conversation()
 
-        return conversation
+    #     return conversation
 
-    def load_conversation(self, conversation_id: int) -> Conversation:
-        conversation = self.conversation_manager.load_conversation(conversation_id, include_system_message=False)
+    # def load_conversation(self, conversation_id: int) -> Conversation:
+    #     conversation = self.conversation_manager.load_conversation(conversation_id, include_system_message=False)
 
-
-        if not conversation:
-            raise ValueError(f"Conversation with ID {conversation_id} not found.")
-        return conversation
+    #     if not conversation:
+    #         raise ValueError(f"Conversation with ID {conversation_id} not found.")
+    #     return conversation
 
     def send_message(self, conversation_id: int, user_message: str) -> Message:
         user_message = user_message.strip()

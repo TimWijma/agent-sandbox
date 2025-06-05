@@ -31,7 +31,7 @@ class ConversationManager:
     def _get_conversation_file_path(self, conversation_id: int) -> str:
         return os.path.join(self.CONVERSATION_DIR, f"conversation_{conversation_id}.json")
     
-    def load_all_conversations(self):
+    def load_conversations(self):
         conversations: dict[Conversation] = {}
         for filename in os.listdir(self.CONVERSATION_DIR):
             if filename.startswith("conversation_") and filename.endswith(".json"):
