@@ -45,6 +45,6 @@ class ToolManager:
         parsed_message = self.parse_message(message)
         if parsed_message:
             tool_type, tool_input = parsed_message
-            return tool_type, self.execute_tool(tool_type, tool_input)
+            return tool_type, tool_input
         
         return ToolType.GENERAL, message

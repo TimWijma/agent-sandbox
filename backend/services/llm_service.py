@@ -3,6 +3,7 @@ from logger import logger
 from litellm import completion
 from dotenv import load_dotenv
 from services.conversation_manager import ConversationManager
+from services.tool_manager import ToolManager
 from models.chat import ChatRole, Message, ToolType
 from datetime import datetime
 
@@ -19,6 +20,7 @@ class LLMService:
         self.model = model
 
         self.conversation_manager = ConversationManager(system_message_path=system_message_path)
+        self.tool_manager = ToolManager()
 
     # def load_conversations(self) -> dict[int, Conversation]:
     #     conversations = self.conversation_manager.load_conversations()
@@ -64,7 +66,7 @@ class LLMService:
         conversation_messages = [
             {
                 "role": message.role.value,
-                "content": message.content
+                "content": message.content if message.type == ToolType.GENERAL else message.original_message
             }
             for message in conversation.messages
         ]
@@ -81,12 +83,22 @@ class LLMService:
         # Extract the model response
         model_response = response.choices[0].message.content
         model_response = model_response.strip()
+        
+        tool_type, tool_input = self.tool_manager.handle_message(model_response)
+        if tool_type != ToolType.GENERAL:
+            logger.info(f"Executing tool: {tool_type} with input: {tool_input}")
+            tool_output = self.tool_manager.execute_tool(tool_type, tool_input)
+            logger.info(f"Tool response: {model_response}")
+
+            message_content = f"Tool '{tool_type.value}' executed with result: {tool_output}"
+        
         model_message = Message(
             id=len(conversation.messages),
-            content=model_response,
+            content=model_response if tool_type == ToolType.GENERAL else message_content,
             type=ToolType.GENERAL,
             role=ChatRole.ASSISTANT,
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            original_message=model_response if tool_type != ToolType.GENERAL else None
         )
         logger.info(f"Received response from LLM: {model_response}")
 
