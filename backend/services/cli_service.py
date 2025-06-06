@@ -88,6 +88,16 @@ class CLIService:
         def toggle_mode(event):
             if self.mode == "conversation":
                 self.switch_mode("selection")
+                
+        @kb.add('c-d')
+        def delete_conversation(event):
+            if self.mode == "selection":
+                selected_option = self.get_selected_option()
+                if selected_option and selected_option.isdigit():
+                    conversation_id = int(selected_option)
+                    self.conversation_manager.delete_conversation(conversation_id)
+                    logger.info(f"Deleted conversation {conversation_id}")
+                    self.switch_mode("selection")
 
         self.create_layout()
 
@@ -133,24 +143,29 @@ class CLIService:
         
         self.app.invalidate()
 
-    def handle_selection(self):
+    def get_selected_option(self) -> str:
         line_text = self.get_current_line_text()
-                
+        
         if line_text.strip() and not line_text.startswith("Conversations:"):
             try:
                 selected_option = line_text.split('.')[0].strip()
-                if selected_option == '+':
-                    self.create_new_conversation()
-                else:
-                    selected_id = int(selected_option)
-                    if selected_id in self.conversations:
-                        logger.info(f"Selected conversation: {selected_id}")
-                        self.open_conversation(selected_id)
-                    else:
-                        logger.error(f"Invalid selection: {line_text}")
-                        return
-            except (ValueError, IndexError):
+                return selected_option
+            except IndexError:
                 logger.error(f"Invalid selection: {line_text}")
+                return ""
+
+    def handle_selection(self):
+        selected_option = self.get_selected_option()
+
+        if selected_option == '+':
+            self.create_new_conversation()
+        else:
+            selected_id = int(selected_option)
+            if selected_id in self.conversations:
+                logger.info(f"Selected conversation: {selected_id}")
+                self.open_conversation(selected_id)
+            else:
+                logger.error(f"Invalid selection: {selected_option}")
                 return
 
     def open_conversation(self, conversation_id):
