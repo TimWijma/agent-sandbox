@@ -44,6 +44,7 @@ class CLIService:
         
         if self.mode == "selection":
             self.update_selection_display()
+            self.app.layout.focus(self.view_buffer)
         elif self.mode == "conversation":
             self.update_message_display()
             if hasattr(self, 'input_buffer'):
@@ -114,7 +115,7 @@ class CLIService:
                     conversation_id = int(selected_option)
                     self.conversation_manager.delete_conversation(conversation_id)
                     logger.info(f"Deleted conversation {conversation_id}")
-                    self.switch_mode("selection")
+                    self.update_selection_display()
 
         self.create_layout()
 
