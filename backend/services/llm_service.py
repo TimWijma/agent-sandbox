@@ -95,7 +95,7 @@ class LLMService:
         model_message = Message(
             id=len(conversation.messages),
             content=model_response if tool_type == ToolType.GENERAL else message_content,
-            type=ToolType.GENERAL,
+            type=tool_type,
             role=ChatRole.ASSISTANT,
             created_at=datetime.now(),
             original_message=model_response if tool_type != ToolType.GENERAL else None
