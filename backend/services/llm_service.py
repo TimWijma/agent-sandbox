@@ -6,10 +6,11 @@ from services.conversation_manager import ConversationManager
 from services.tool_manager import ToolManager
 from models.chat import ChatRole, Message, ToolType
 from datetime import datetime
+import asyncio
 
 
 class LLMService:
-    def __init__(self, model: str = "gemini/gemini-2.0-flash", system_message_path: str = "prompts/system_message.txt"):
+    def __init__(self, model: str = "gemini/gemini-2.0-flash"):
         load_dotenv()
 
         self.API_KEY = os.getenv("GEMINI_API_KEY")
@@ -19,7 +20,7 @@ class LLMService:
 
         self.model = model
 
-        self.conversation_manager = ConversationManager(system_message_path=system_message_path)
+        self.conversation_manager = ConversationManager()
         self.tool_manager = ToolManager()
 
     # def load_conversations(self) -> dict[int, Conversation]:
@@ -40,7 +41,7 @@ class LLMService:
     #         raise ValueError(f"Conversation with ID {conversation_id} not found.")
     #     return conversation
 
-    def send_message(self, conversation_id: int, user_message: str) -> Message:
+    async def send_message(self, conversation_id: int, user_message: str) -> Message:
         user_message = user_message.strip()
         if not user_message:
             logger.error("User message cannot be empty.")
@@ -73,11 +74,13 @@ class LLMService:
         
         logger.info(f"Sending message to LLM: {conversation_messages}")
         
-        # Call the LLM API
-        response = completion(
-            model=self.model,
-            messages=conversation_messages,
-            temperature=0.5,
+        response = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: completion(
+                model=self.model,
+                messages=conversation_messages,
+                temperature=0.5,
+            )
         )
 
         # Extract the model response

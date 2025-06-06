@@ -1,3 +1,9 @@
+import os
+import sys
+import asyncio
+from datetime import datetime
+from typing import Optional
+
 from prompt_toolkit.application import Application
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.layout.containers import HSplit, Window
@@ -6,15 +12,23 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.document import Document
 
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from logger import logger
-from models.chat import ChatRole, Conversation
+from models.chat import ChatRole, Conversation, Message
 from services.llm_service import LLMService
 
 class CLIService:
-    def __init__(self):
+    def __init__(self, working_dir: str = None):
+        self.working_dir = working_dir or os.getcwd()
+        self.original_working_dir = os.getcwd()
+
         self.llm_service = LLMService()
         self.conversation_manager = self.llm_service.conversation_manager
         self.conversation: Conversation = None
+
+        self.pending_response: Optional[asyncio.Task] = None
+        self.is_waiting_for_response = False
         
         self.mode = "selection"
 
@@ -37,6 +51,10 @@ class CLIService:
 
     def create_layout(self):
         windows = [
+            Window(
+                content=FormattedTextControl(text=f"AI Agent CLI - CWD: {self.working_dir}"),
+                height=1,
+            ),
             Window(
                 content=BufferControl(
                     buffer=self.view_buffer,
@@ -69,7 +87,7 @@ class CLIService:
             if self.mode == "selection":
                 self.handle_selection()
             elif self.mode == "conversation":
-                self.send_message()
+                self.send_message_non_blocking()
                 
         @kb.add('c-c')
         def exit_app(event):
@@ -106,6 +124,7 @@ class CLIService:
             full_screen=True,
             mouse_support=True,
         )
+        print("AI Agent CLI started. Press 'Tab' to switch modes, 'Enter' to select or send messages, and 'Ctrl+C' to exit.")
         
         if self.mode == "selection":
             self.update_selection_display()
@@ -127,8 +146,9 @@ class CLIService:
 
         return formatted_text
 
-    def update_message_display(self):
-        self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
+    def update_message_display(self, load_conversation: bool = True):
+        if load_conversation:
+            self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
 
         logger.info("Updating message display")
         logger.debug(self.get_formatted_messages())
@@ -194,20 +214,52 @@ class CLIService:
         self.open_conversation(new_conversation_id)
         logger.info(f"Created new conversation {new_conversation_id}")
 
-    def send_message(self):
+    async def send_message_async(self):
         message = self.input_buffer.text.strip()
         if message:
             save_message = message
+            
+            self.conversation.messages.append(Message(
+                id=len(self.conversation.messages),
+                content=message,
+                type="general",
+                role=ChatRole.USER,
+                created_at=datetime.now()
+            ))
+            
             self.input_buffer.text = ""
+            self.update_message_display(load_conversation=False)
+            self.is_waiting_for_response = True
 
             try:
-                self.llm_service.send_message(self.conversation.id, message)
+                self.pending_response = asyncio.create_task(
+                    self.llm_service.send_message(self.conversation.id, message)
+                )
+                
+                await self.pending_response
             except Exception as e:
                 logger.error(f"Error sending message: {e}")
                 self.input_buffer.text = save_message
                 return
+            finally:
+                self.is_waiting_for_response = False
+                self.pending_response = None
+                self.update_message_display()
 
-            self.update_message_display()
+
+    def send_message_non_blocking(self):
+        """Non-blocking wrapper that can be called from synchronous code"""
+        if not self.is_waiting_for_response:
+            # Create new event loop if one doesn't exist
+            try:
+                loop = asyncio.get_event_loop()
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            # Schedule the async function
+            asyncio.create_task(self.send_message_async())
+
 
     def get_current_line_text(self) -> str:
         """Get the text of the line where the cursor is currently positioned"""
@@ -217,6 +269,28 @@ class CLIService:
     def run(self):
         self.app.run()
 
+
+def main():
+    working_dir = os.getcwd()
+    
+    if not os.path.exists(working_dir):
+        logger.error(f"Working directory does not exist: {working_dir}")
+        sys.exit(1)
+        
+    if not os.path.isdir(working_dir):
+        logger.error(f"Working directory is not a directory: {working_dir}")
+        sys.exit(1)
+        
+    print(f"Starting AI Agent CLI in directory: {working_dir}")
+    
+    try:
+        chat_app = CLIService(working_dir)
+        chat_app.run()
+    except KeyboardInterrupt:
+        print("\nExiting AI Agent CLI.")
+    except Exception as e:
+        logger.error(f"An error occurred: {e}")
+        sys.exit(1)
+
 if __name__ == "__main__":
-    chat_app = CLIService()
-    chat_app.run()
+    main()

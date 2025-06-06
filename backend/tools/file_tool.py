@@ -15,7 +15,11 @@ class FileTool(BaseTool):
         
         try:
             logger.info(f"Executing file tool command: {clean_code}")
-            exec(clean_code, {}, {})
+            exec(clean_code, 
+                 {
+                    "os": __import__('os'),
+                    "sys": __import__('sys'),
+                }, {})
             
             output_str = redirected_output.getvalue()
             if output_str:

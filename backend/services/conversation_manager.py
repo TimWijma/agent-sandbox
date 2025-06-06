@@ -1,16 +1,31 @@
 import os
 import json
+import pkg_resources
 from typing import Optional
 from models.chat import Conversation, Message, ToolType, ChatRole
 from datetime import datetime
 from logger import logger
 
 class ConversationManager:
-    def __init__(self, system_message_path):
-        self.CONVERSATION_DIR = "conversations"
+    def __init__(self):
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_file_dir)
+
+        try:
+            self.CONVERSATION_DIR = os.path.join(project_root, "conversations")
+        except Exception as e:
+            logger.error(f"Failed to set conversation directory: {e}")
+            self.CONVERSATION_DIR = "conversations"
+
         self._create_conversation_dir()
         
-        self.system_message_path = system_message_path
+        try:
+            self.system_message_path = os.path.join(project_root, "prompts", "system_message.txt")
+        except Exception as e:
+            logger.error(f"Failed to set system message path: {e}")
+            self.system_message_path = "prompts/system_message.txt"
+
+        
         self.system_message = None
 
     def _load_system_message(self):
