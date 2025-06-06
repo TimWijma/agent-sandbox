@@ -286,6 +286,14 @@ def main():
     
     try:
         chat_app = CLIService(working_dir)
+
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "new":
+                chat_app.create_new_conversation()
+            elif sys.argv[1].isdigit():
+                conversation_id = int(sys.argv[1])
+                chat_app.open_conversation(conversation_id)
+
         chat_app.run()
     except KeyboardInterrupt:
         print("\nExiting AI Agent CLI.")
