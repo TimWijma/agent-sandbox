@@ -15,7 +15,6 @@ class CLIService:
         self.llm_service = LLMService()
         self.conversation_manager = self.llm_service.conversation_manager
         self.conversation: Conversation = None
-        self.messages = []
         
         self.mode = "selection"
 
@@ -115,11 +114,24 @@ class CLIService:
             self.app.layout.focus(self.input_buffer)
         
     def get_formatted_messages(self) -> str:
-        formatted_text = "\n".join(self.messages)
+        messages = self.conversation.messages if self.conversation else []
+        formatted_text = ""
+        for message in messages:
+            role = message.role
+            content = message.content
+            
+            if role == ChatRole.USER:
+                formatted_text += f"[User]: {content}\n"
+            elif role == ChatRole.ASSISTANT:
+                formatted_text += f"[Assistant]: {content}\n"
+
         return formatted_text
 
     def update_message_display(self):
+        self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
+
         logger.info("Updating message display")
+        logger.debug(self.get_formatted_messages())
         self.view_buffer.set_document(
             Document(self.get_formatted_messages()),
             bypass_readonly=True
@@ -171,7 +183,6 @@ class CLIService:
     def open_conversation(self, conversation_id):
         """Open an existing conversation by ID"""
         self.conversation = self.conversation_manager.load_conversation(conversation_id)
-        self.messages = [msg.content for msg in self.conversation.messages if msg.role != ChatRole.SYSTEM]
         self.switch_mode("conversation")
         logger.info(f"Opened conversation {conversation_id}")
 
@@ -186,13 +197,15 @@ class CLIService:
     def send_message(self):
         message = self.input_buffer.text.strip()
         if message:
-            self.messages.append(f"You: {message}")
+            save_message = message
             self.input_buffer.text = ""
-            self.update_message_display()
-            
-            response_message = self.llm_service.send_message(self.conversation.id, message)
 
-            self.messages.append(f"Assistant: {response_message.content}")
+            try:
+                self.llm_service.send_message(self.conversation.id, message)
+            except Exception as e:
+                logger.error(f"Error sending message: {e}")
+                self.input_buffer.text = save_message
+                return
 
             self.update_message_display()
 
