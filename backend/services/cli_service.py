@@ -4,7 +4,7 @@ import asyncio
 from datetime import datetime
 from typing import Optional
 
-from prompt_toolkit.application import Application
+from prompt_toolkit.application import Application, get_app
 from prompt_toolkit.buffer import Buffer
 from prompt_toolkit.layout.containers import HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -31,6 +31,7 @@ class CLIService:
         self.is_waiting_for_response = False
         
         self.mode = "selection"
+        self.input_height = 2
 
         self.setup_ui()
         
@@ -67,10 +68,10 @@ class CLIService:
         
         if self.mode == "conversation":
             windows.extend([
-                Window(height=1, content=FormattedTextControl(text="─" * 50)),
+                Window(height=1, content=FormattedTextControl(lambda: "─" * get_app().output.get_size().columns)),
                 Window(
                     content=BufferControl(buffer=self.input_buffer, focusable=True),
-                    height=1,
+                    height=self.input_height,
                     wrap_lines=True,
                 ),
             ])
@@ -117,6 +118,23 @@ class CLIService:
                     logger.info(f"Deleted conversation {conversation_id}")
                     self.update_selection_display()
 
+        @kb.add('c-up')
+        def increase_input_height(event):
+            logger.info(f"Increased input height to {self.input_height}")
+            if self.mode == "conversation":
+                self.input_height += 1
+                self.create_layout()
+                self.app.layout.focus(self.input_buffer)
+                self.app.invalidate()
+                
+        @kb.add('c-down')
+        def decrease_input_height(event):
+            if self.mode == "conversation" and self.input_height > 1:
+                self.input_height -= 1
+                self.create_layout()
+                self.app.layout.focus(self.input_buffer)
+                self.app.invalidate()
+
         self.create_layout()
 
         self.app = Application(
@@ -151,8 +169,6 @@ class CLIService:
         if load_conversation:
             self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
 
-        logger.info("Updating message display")
-        logger.debug(self.get_formatted_messages())
         self.view_buffer.set_document(
             Document(self.get_formatted_messages()),
             bypass_readonly=True
@@ -165,9 +181,10 @@ class CLIService:
         
         formatted_text = "Conversations:\n"
         for idx, conv in self.conversations.items():
-            formatted_text += f"{idx}. {conv.title} (Created: {conv.created_at})\n"
+            created_date = conv.created_at.strftime("%Y-%m-%d-%H:%M:%S")
+            formatted_text += f"{idx:2}. {conv.title:<30} {created_date:>10}\n"
 
-        formatted_text += "+. New Conversation"
+        formatted_text += " +. Create New Conversation"
     
         self.view_buffer.set_document(
             Document(formatted_text),

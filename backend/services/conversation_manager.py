@@ -61,7 +61,7 @@ class ConversationManager:
                         conversations[conversation_id] = conversation
                         
                 except (ValueError, json.JSONDecodeError) as e:
-                    logger.info(f"Error loading conversation from {filename}: {e}")
+                    logger.error(f"Error loading conversation from {filename}: {e}")
 
         conversations = dict(sorted(conversations.items(), key=lambda item: item[0]))
         logger.info(f"Loaded {len(conversations)} conversations.")
@@ -80,7 +80,7 @@ class ConversationManager:
                 
                 return conversation
         except (ValueError, json.JSONDecodeError) as e:
-            logger.info(f"Error loading conversation from {file_path}: {e}")
+            logger.error(f"Error loading conversation from {file_path}: {e}")
             return None
 
     def create_conversation(self) -> Conversation:
@@ -124,7 +124,7 @@ class ConversationManager:
                 json.dump(conversation_json, file, indent=4)
                 logger.info(f"Conversation {conversation.id} saved to {file_path}.")
         except IOError as e:
-            logger.info(f"Error saving conversation to {file_path}: {e}")
+            logger.error(f"Error saving conversation to {file_path}: {e}")
 
     def delete_conversation(self, conversation_id: int) -> bool:
         file_path = self._get_conversation_file_path(conversation_id)
