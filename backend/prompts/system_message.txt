@@ -33,13 +33,8 @@ For each user query, respond according to its category:
     Response: cp source.txt destination.txt
 
 - General questions:
-  Respond with: <concise answer>
-  Provide a direct and concise answer to the question without additional explanations or context.
-  Examples:
-    Query: "What is the capital of France?"  
-    Response: Paris  
-    Query: "Who wrote '1984'?"  
-    Response: George Orwell
+  Respond with: <helpful answer>
+  Provide a direct and informative answer. Be concise but include relevant context or examples when helpful.
 
 General Rules:
 - Do NOT mix response styles.

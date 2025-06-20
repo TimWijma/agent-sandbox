@@ -1,6 +1,6 @@
 from models.chat import MessageResponse
 from tools.calculator_tool import CalculatorTool
-from backend.tools.code_tool import CodeTool
+from tools.code_tool import CodeTool
 from tools.base_tool import BaseTool
 from tools.command_tool import CommandTool
 from models.tools import ToolType
