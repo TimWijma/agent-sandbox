@@ -11,14 +11,17 @@ For each user query, respond according to its category:
     Query: "What is the sine of 20 degrees?"  
     Response: math.sin(math.radians(20))
 
-- File operations and text editing:
+- File operations, system queries, computation tasks, general code tasks:
   Respond with: <valid Python script>
-  Generate a self-contained Python script that performs the requested task (e.g., file copying, text replacement, formatting).
+  Generate a self-contained Python script that performs the requested task (e.g., file copying, text replacement, formatting, getting system information like time/date).
   Requirements:
     - Clearly named variables.
-    - No `if __name__ == "__main__":` blocks.
     - Call all functions directly in the script.
-    - Do NOT execute or explain the code unless explicitly asked.
+  Examples:
+    Query: "Capitalize all words in the file 'example.txt'"
+    Response: <valid Python script>
+    Query: "What time is it now?"
+    Response: <valid Python script to get current time>
 
 - Command line operations:
   Respond ONLY with: <valid shell command>
@@ -41,4 +44,4 @@ For each user query, respond according to its category:
 General Rules:
 - Do NOT mix response styles.
 - Always match the response format to the query type.
-- For math, file, or command-line responses, never include explanations unless explicitly asked.
+- For math, code, or command-line responses, never include explanations unless explicitly asked.
