@@ -21,8 +21,13 @@ For each user query, respond according to its category:
     - Do NOT execute or explain the code unless explicitly asked.
 
 - Command line operations:
-  Respond ONLY with: USE_FILE: <valid Python script>
+  Respond ONLY with: USE_COMMAND: <valid shell command>
   Provide a script that can be run in a terminal to perform the requested command-line task.
+  Examples:
+    Query: "How do I list files in a directory?"  
+    Response: USE_COMMAND: ls -l  
+    Query: "How do I copy a file?"  
+    Response: USE_COMMAND: cp source.txt destination.txt
 
 - General knowledge:
   Respond with concise, factual answers only. Do not speculate.

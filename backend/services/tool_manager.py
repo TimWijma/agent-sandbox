@@ -1,6 +1,7 @@
 from tools.calculator_tool import CalculatorTool
 from tools.file_tool import FileTool
 from tools.base_tool import BaseTool
+from tools.command_tool import CommandTool
 from models.tools import ToolType
 import re
 from typing import Optional
@@ -12,7 +13,8 @@ class ToolManager:
     def __init__(self):
         self.tool_registry: dict[ToolType, BaseTool] = {
             ToolType.CALCULATOR: CalculatorTool(),
-            ToolType.FILE: FileTool()
+            ToolType.FILE: FileTool(),
+            ToolType.COMMAND: CommandTool()
         }
 
         logger.info("ToolManager initialized with tools: %s", list(self.tool_registry.keys()))
