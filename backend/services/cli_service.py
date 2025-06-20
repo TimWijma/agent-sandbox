@@ -2,6 +2,7 @@ import os
 import sys
 import asyncio
 from datetime import datetime
+import textwrap
 from typing import Optional
 
 from prompt_toolkit.application import Application, get_app
@@ -169,8 +170,17 @@ class CLIService:
         if load_conversation:
             self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
 
+        raw_text = self.get_formatted_messages()
+        width = get_app().output.get_size().columns
+
+        lines = raw_text.splitlines()
+        wrapped_text = '\n'.join(
+            '\n'.join(textwrap.wrap(line, width=width))
+            for line in lines
+        )
+
         self.view_buffer.set_document(
-            Document(self.get_formatted_messages()),
+            Document(wrapped_text),
             bypass_readonly=True
         )
         
