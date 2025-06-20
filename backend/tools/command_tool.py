@@ -3,6 +3,13 @@ from logger import logger
 import subprocess
 
 class CommandTool(BaseTool):
+    def requires_confirmation(self) -> bool:
+        return True
+    
+    def preview(self, input: str) -> str:
+        command = input.strip()
+        return f"⚠️  COMMAND PREVIEW ⚠️\nAbout to execute shell command:\n'{command}'\n\nThis will run on your system. Do you want to proceed? (y/n)"
+    
     def run(self, input: str) -> str:
         command = input.strip()
                 

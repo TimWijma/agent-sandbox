@@ -6,6 +6,13 @@ import sys
 import io
 
 class FileTool(BaseTool):
+    def requires_confirmation(self) -> bool:
+        return True
+    
+    def preview(self, input: str) -> str:
+        clean_code = self.extract_code_blocks(input)
+        return f"⚠️  FILE OPERATION PREVIEW ⚠️\nAbout to execute Python file operations:\n\n{clean_code}\n\nThis will modify your file system. Do you want to proceed? (y/n)"
+    
     def run(self, input: str) -> str:
         clean_code = self.extract_code_blocks(input)
         
@@ -15,11 +22,13 @@ class FileTool(BaseTool):
         
         try:
             logger.info(f"Executing file tool command: {clean_code}")
-            exec(clean_code, 
-                 {
+
+            namespace = {
                     "os": __import__('os'),
                     "sys": __import__('sys'),
-                }, {})
+                }
+
+            exec(clean_code, namespace, namespace)
             
             output_str = redirected_output.getvalue()
             if output_str:

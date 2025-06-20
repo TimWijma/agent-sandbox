@@ -18,6 +18,8 @@ class Message(BaseModel):
     role: ChatRole
     created_at: datetime
     original_message: str | None = None
+    confirmed: bool | None = None  # True if tool was confirmed, False if declined, None for non-tool messages
+    pending_confirmation: bool = False  # True if this message is waiting for user confirmation
 
 class Conversation(BaseModel):
     id: int
