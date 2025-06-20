@@ -1,10 +1,10 @@
-import os
+import litellm, os
 from logger import logger
 from litellm import completion
 from dotenv import load_dotenv
 from services.conversation_manager import ConversationManager
 from services.tool_manager import ToolManager
-from models.chat import ChatRole, Message, ToolType
+from models.chat import ChatRole, Message, ToolType, MessageResponse
 from datetime import datetime
 import asyncio
 
@@ -19,9 +19,23 @@ class LLMService:
         os.environ["GEMINI_API_KEY"] = self.API_KEY
 
         self.model = model
+        
+        litellm.enable_json_schema_validation = True
 
         self.conversation_manager = ConversationManager()
         self.tool_manager = ToolManager()
+
+    def test(self, input):
+        resp = completion(
+            model=self.model,
+            messages=[
+                {"role": ChatRole.USER.value, "content": input}
+            ],
+            temperature=0.5,
+            response_format=MessageResponse
+        )
+        
+        print(resp.choices[0].message.content)
 
     async def send_message(self, conversation_id: int, user_message: str) -> Message:
         user_message = user_message.strip()
@@ -52,7 +66,7 @@ class LLMService:
         conversation_messages = [
             {
                 "role": message.role.value,
-                "content": message.content if message.type == ToolType.GENERAL else message.original_message
+                "content": message.content if message.type == ToolType.GENERAL else message.original_message,
             }
             for message in conversation.messages
             if not message.pending_confirmation
@@ -66,14 +80,22 @@ class LLMService:
                 model=self.model,
                 messages=conversation_messages,
                 temperature=0.5,
+                response_format=MessageResponse,
             )
         )
-
+        
         # Extract the model response
         model_response = response.choices[0].message.content
         model_response = model_response.strip()
+
+        model_response_object = MessageResponse.model_validate_json(model_response)
+        logger.info(f"Model response: {model_response_object}")
+
+        if not model_response_object:
+            logger.error("Model response is empty or invalid.")
+            raise ValueError("Model response is empty or invalid.")
         
-        tool_type, tool_input = self.tool_manager.handle_message(model_response)
+        tool_type, tool_input = self.tool_manager.handle_message(model_response_object)
         if tool_type != ToolType.GENERAL:
             logger.info(f"Executing tool: {tool_type} with input: {tool_input}")
             tool_output, needs_confirmation = self.tool_manager.execute_tool(tool_type, tool_input)
@@ -87,7 +109,7 @@ class LLMService:
                 message_content = f"Tool '{tool_type.value}' executed with result: {tool_output}"
                 pending_confirmation = False
         else:
-            message_content = model_response
+            message_content = model_response_object.content
             pending_confirmation = False
         
         model_message = Message(
@@ -96,10 +118,10 @@ class LLMService:
             type=tool_type,
             role=ChatRole.ASSISTANT,
             created_at=datetime.now(),
-            original_message=model_response if tool_type != ToolType.GENERAL else None,
+            original_message=model_response_object.content if tool_type != ToolType.GENERAL else None,
             pending_confirmation=pending_confirmation
         )
-        logger.info(f"Received response from LLM: {model_response}")
+        logger.info(f"Received response from LLM: {model_message.content}")
 
         # Add model response to conversation
         conversation.messages.append(model_message)

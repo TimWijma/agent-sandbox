@@ -11,6 +11,11 @@ class ChatRole(str, Enum):
 class ChatRequest(BaseModel):
     message: str
 
+# The response format for the LLM
+class MessageResponse(BaseModel):
+    type: ToolType
+    content: str
+
 class Message(BaseModel):
     id: int
     content: str

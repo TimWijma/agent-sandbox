@@ -1,3 +1,4 @@
+from models.chat import MessageResponse
 from tools.calculator_tool import CalculatorTool
 from tools.file_tool import FileTool
 from tools.base_tool import BaseTool
@@ -21,23 +22,6 @@ class ToolManager:
 
         logger.info("ToolManager initialized with tools: %s", list(self.tool_registry.keys()))
 
-    def parse_message(self, message: str) -> Optional[tuple[ToolType, str]]:
-        match = self.TOOL_PATTERN.match(message)
-        if not match:
-            return None
-        
-        tool_name = match.group(1).lower()
-        tool_input = match.group(2).strip()
-
-        try:
-            tool_type = ToolType(tool_name)
-        except ValueError:
-            raise ValueError(f"Tool '{tool_name}' is not a valid tool type.")
-        if tool_type not in self.tool_registry:
-            raise ValueError(f"Tool '{tool_type}' not found in registry.")
-
-        return tool_type, tool_input
-    
     def execute_tool(self, tool_type: ToolType, tool_input: str, confirmed: bool = False) -> Tuple[str, bool]:
         """
         Execute a tool with confirmation support.
@@ -49,14 +33,13 @@ class ToolManager:
         tool = self.tool_registry[tool_type]
         return tool.execute_with_confirmation(tool_input, confirmed)
     
-    def handle_message(self, message: str) -> tuple[ToolType, str]:
-        parsed_message = self.parse_message(message)
-        if parsed_message:
-            tool_type, tool_input = parsed_message
-            return tool_type, tool_input
-        
-        return ToolType.GENERAL, message
-    
+    def handle_message(self, message: MessageResponse) -> tuple[ToolType, str]:
+        tool_type = message.type
+        if tool_type is not ToolType.GENERAL and tool_type not in self.tool_registry:
+            raise ValueError(f"Tool type '{tool_type}' is not recognized.")
+
+        return tool_type, message.content.strip()
+
     def store_pending_confirmation(self, conversation_id: str, tool_type: ToolType, tool_input: str):
         """Store a pending confirmation for later execution"""
         self.pending_confirmations[conversation_id] = (tool_type, tool_input)
