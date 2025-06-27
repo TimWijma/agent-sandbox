@@ -2,24 +2,25 @@ from tools.base_tool import BaseTool
 from logger import logger
 import subprocess
 
+
 class CommandTool(BaseTool):
     def requires_confirmation(self) -> bool:
         return True
-    
+
     def preview(self, input: str) -> str:
         command = input.strip()
         return f"⚠️  COMMAND PREVIEW ⚠️\nAbout to execute shell command:\n'{command}'\n\nThis will run on your system. Do you want to proceed? (y/n)"
-    
+
     def run(self, input: str) -> str:
         command = input.strip()
-                
+
         try:
             logger.info(f"Executing shell command: {command}")
 
             result = subprocess.run(command, shell=True, text=True, capture_output=True)
 
             logger.info(f"Command executed with return code: {result.returncode}")
-            
+
             if result.returncode != 0:
                 error_message = f"Command failed with return code {result.returncode}: {result.stderr.strip()}"
                 logger.error(error_message)
