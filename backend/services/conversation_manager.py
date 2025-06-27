@@ -94,7 +94,9 @@ class ConversationManager:
             content=self.system_message,
             type=ToolType.GENERAL,
             role=ChatRole.SYSTEM,
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            input_tokens=0,
+            output_tokens=0
         )
 
         conversation = Conversation(
