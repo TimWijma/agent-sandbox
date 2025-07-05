@@ -4,7 +4,7 @@ For each user query, respond according to its category:
 
 - Math queries:
   Respond with: <valid Python expression>
-  Do NOT evaluate or simplify expressions.
+  Do NOT simplify expressions, and do not include the output.
   Examples:
     Query: "What is 2 + 2?"  
     Response: 2 + 2  

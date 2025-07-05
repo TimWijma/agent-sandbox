@@ -1,10 +1,17 @@
+from typing import List
 import litellm, os
 from logger import logger
 from litellm import completion
 from dotenv import load_dotenv
 from services.conversation_manager import ConversationManager
 from services.tool_manager import ToolManager
-from models.chat import ChatRole, Message, ToolType, MessageResponse
+from models.chat import (
+    ChatRole,
+    Message,
+    MultipleMessageResponse,
+    ToolType,
+    MessageResponse,
+)
 from datetime import datetime
 import asyncio
 
@@ -32,7 +39,7 @@ class LLMService:
             model=self.model,
             messages=[{"role": ChatRole.USER.value, "content": input}],
             temperature=0.5,
-            response_format=MessageResponse,
+            response_format=MultipleMessageResponse,
         )
 
         print(resp.choices[0].message.content)
