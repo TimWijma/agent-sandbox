@@ -1,10 +1,14 @@
 from models.chat import MessageResponse
+from models.tools import ToolType
+
+from tools.base_tool import BaseTool
 from tools.calculator_tool import CalculatorTool
 from tools.code_tool import CodeTool
-from tools.base_tool import BaseTool
 from tools.command_tool import CommandTool
-from models.tools import ToolType
+from tools.search_tool import SearchTool
+
 import re
+
 from typing import Optional, Tuple
 from logger import logger
 
@@ -17,6 +21,7 @@ class ToolManager:
             ToolType.CALCULATOR: CalculatorTool(),
             ToolType.CODE: CodeTool(),
             ToolType.COMMAND: CommandTool(),
+            ToolType.SEARCH: SearchTool(),
         }
 
         self.pending_confirmations: dict[str, Tuple[ToolType, str]] = {}
