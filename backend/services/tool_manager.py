@@ -31,7 +31,7 @@ class ToolManager:
         )
 
     def execute_tool(
-        self, tool_type: ToolType, tool_input: str, confirmed: bool = False
+        self, tool_type: ToolType, tool_input: str, confirmed: bool = False, **kwargs
     ) -> Tuple[str, bool]:
         """
         Execute a tool with confirmation support.
@@ -41,14 +41,19 @@ class ToolManager:
             raise ValueError(f"Tool '{tool_type}' not found in registry.")
 
         tool = self.tool_registry[tool_type]
-        return tool.execute_with_confirmation(tool_input, confirmed)
+        return tool.execute_with_confirmation(tool_input, confirmed, **kwargs)
 
-    def handle_message(self, message: MessageResponse) -> tuple[ToolType, str]:
+    def handle_message(self, message: MessageResponse) -> tuple[ToolType, str, dict]:
         tool_type = message.type
         if tool_type is not ToolType.GENERAL and tool_type not in self.tool_registry:
             raise ValueError(f"Tool type '{tool_type}' is not recognized.")
 
-        return tool_type, message.content.strip()
+        # Extract optional parameters
+        params = {}
+        if message.region is not None:
+            params["region"] = message.region
+
+        return tool_type, message.content.strip(), params
 
     def store_pending_confirmation(
         self, conversation_id: str, tool_type: ToolType, tool_input: str

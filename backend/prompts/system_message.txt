@@ -35,11 +35,13 @@ For each user query, respond according to its category:
 - Search queries:
   Respond with: <valid search query>
   Provide a search query that can be used in a search engine.
+  When region is relevant, include the country code in the region field.
+  ONLY include the region for search queries
   Examples:
     Query: "Latest news on AI technology"  
     Response: "latest news on AI technology"
     Query: "What are good restaurants in New York?"  
-    Response: "good restaurants in New York"
+    Response: "good restaurants in New York" Region: US
 
 - General questions:
   Respond with: <helpful answer>

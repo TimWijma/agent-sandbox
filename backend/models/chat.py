@@ -19,6 +19,8 @@ class MessageResponse(BaseModel):
     type: ToolType
     content: str
 
+    region: str | None = None  # For SEARCH tool - specify geographic region
+
 
 class MultipleMessageResponse(BaseModel):
     messages: list[MessageResponse]

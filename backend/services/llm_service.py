@@ -115,11 +115,13 @@ class LLMService:
             logger.error("Model response is empty or invalid.")
             raise ValueError("Model response is empty or invalid.")
 
-        tool_type, tool_input = self.tool_manager.handle_message(model_response_object)
+        tool_type, tool_input, tool_params = self.tool_manager.handle_message(
+            model_response_object
+        )
         if tool_type != ToolType.GENERAL:
             logger.info(f"Executing tool: {tool_type} with input: {tool_input}")
             tool_output, needs_confirmation = self.tool_manager.execute_tool(
-                tool_type, tool_input
+                tool_type, tool_input, **tool_params
             )
 
             if needs_confirmation:
@@ -131,7 +133,7 @@ class LLMService:
             else:
                 logger.info(f"Tool response: {tool_output}")
                 message_content = (
-                    f"Tool '{tool_type.value}' executed with result: {tool_output}"
+                    f"Tool '{tool_type.value}' executed with result:\n{tool_output}"
                 )
                 pending_confirmation = False
         else:
@@ -192,7 +194,7 @@ class LLMService:
                 tool_type, tool_input, confirmed=True
             )
             message_content = (
-                f"Tool '{tool_type.value}' executed with result: {tool_output}"
+                f"Tool '{tool_type.value}' executed with result:\n{tool_output}"
             )
             confirmed = True
         else:

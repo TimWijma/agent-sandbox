@@ -12,7 +12,7 @@ class CodeTool(BaseTool):
 
     def preview(self, input: str) -> str:
         clean_code = self.extract_code_blocks(input)
-        return f"⚠️  CODE OPERATION PREVIEW ⚠️\nAbout to execute Python code:\n\n{clean_code}\n\nDo you want to proceed? (y/n)"
+        return f"!!  CODE OPERATION PREVIEW !!\nAbout to execute Python code:\n\n{clean_code}\n\nDo you want to proceed? (y/n)"
 
     def run(self, input: str) -> str:
         clean_code = self.extract_code_blocks(input)
