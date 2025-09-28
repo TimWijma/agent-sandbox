@@ -3,7 +3,8 @@ from enum import Enum
 
 class ToolType(str, Enum):
     GENERAL = "general"
+    THOUGHT = "thought"
     CALCULATOR = "calculator"
-    CODE = "code"
-    COMMAND = "command"
-    SEARCH = "search"
+    PYTHON_INTERPRETER = "python_interpreter"
+    SHELL_COMMAND = "shell_command"
+    GOOGLE_SEARCH = "google_search"

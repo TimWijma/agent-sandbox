@@ -19,23 +19,30 @@ from logger import logger
 from models.chat import ChatRole, Conversation, Message
 from services.llm_service import LLMService
 
-
 class CLIService:
     def __init__(self, working_dir: str = None):
         self.working_dir = working_dir or os.getcwd()
         self.original_working_dir = os.getcwd()
 
-        self.llm_service = LLMService()
+        self.ui_update_queue = asyncio.Queue()
+        self.llm_service = LLMService(ui_callback=self._ui_update_callback)
         self.conversation_manager = self.llm_service.conversation_manager
         self.conversation: Conversation = None
 
-        self.pending_response: Optional[asyncio.Task] = None
-        self.is_waiting_for_response = False
-
+        self.is_processing = False
         self.mode = "selection"
         self.input_height = 2
 
         self.setup_ui()
+
+    async def _ui_update_callback(self, message: str):
+        await self.ui_update_queue.put(message)
+
+    async def _process_ui_updates(self):
+        while True:
+            message = await self.ui_update_queue.get()
+            self.append_to_view(f"{message}\n")
+            self.ui_update_queue.task_done()
 
     def switch_mode(self, mode: str):
         if mode not in ["selection", "conversation"]:
@@ -54,115 +61,65 @@ class CLIService:
                 self.app.layout.focus(self.input_buffer)
 
     def get_header_text(self):
-        """Get the header text based on current mode and conversation state"""
         if self.mode == "conversation" and self.conversation:
-            token_info = self.conversation.get_total_tokens()
-            return f"AI Agent CLI - CWD: {self.working_dir} | Tokens: {token_info['total_tokens']} (In: {token_info['input_tokens']}, Out: {token_info['output_tokens']})"
-        else:
-            return f"AI Agent CLI - CWD: {self.working_dir}"
+            try:
+                token_info = self.conversation.get_total_tokens()
+                return f"AI Agent CLI - CWD: {self.working_dir} | Tokens: {token_info['total_tokens']} (In: {token_info['input_tokens']}, Out: {token_info['output_tokens']})"
+            except Exception as e:
+                logger.error(f"Could not get token info: {e}")
+        return f"AI Agent CLI - CWD: {self.working_dir}"
 
     def create_layout(self):
-        # Create the header window
         header_text = self.get_header_text()
-
         windows = [
-            Window(
-                content=FormattedTextControl(text=header_text),
-                height=1,
-            ),
-            Window(
-                content=BufferControl(buffer=self.view_buffer, focusable=True),
-                wrap_lines=True,
-            ),
+            Window(content=FormattedTextControl(text=header_text), height=1),
+            Window(content=BufferControl(buffer=self.view_buffer, focusable=True), wrap_lines=True),
         ]
-
         if self.mode == "conversation":
-            windows.extend(
-                [
-                    Window(
-                        height=1,
-                        content=FormattedTextControl(
-                            lambda: "─" * get_app().output.get_size().columns
-                        ),
-                    ),
-                    Window(
-                        content=BufferControl(buffer=self.input_buffer, focusable=True),
-                        height=self.input_height,
-                        wrap_lines=True,
-                    ),
-                ]
-            )
-
+            windows.extend([
+                Window(height=1, content=FormattedTextControl(lambda: "─" * get_app().output.get_size().columns)),
+                Window(content=BufferControl(buffer=self.input_buffer, focusable=True), height=self.input_height, wrap_lines=True),
+            ])
         self.layout = Layout(HSplit(windows))
 
     def setup_ui(self):
         self.input_buffer = Buffer(multiline=False)
         self.view_buffer = Buffer(read_only=True)
-
         kb = KeyBindings()
 
         @kb.add("enter")
-        def handle_enter(event):
+        def _(event):
             if self.mode == "selection":
                 self.handle_selection()
-            elif self.mode == "conversation":
+            elif self.mode == "conversation" and not self.is_processing:
                 self.send_message_non_blocking()
 
         @kb.add("c-c")
-        def exit_app(event):
+        def _(event):
             event.app.exit()
 
-        # Switch focus between input and message buffer
         @kb.add("tab")
-        def switch_focus(event):
-            if event.app.layout.has_focus(self.input_buffer):
-                event.app.layout.focus(self.view_buffer)
+        def _(event):
+            if self.app.layout.has_focus(self.input_buffer):
+                self.app.layout.focus(self.view_buffer)
             else:
-                event.app.layout.focus(self.input_buffer)
+                self.app.layout.focus(self.input_buffer)
 
         @kb.add("s-tab")
-        def toggle_mode(event):
+        def _(event):
             if self.mode == "conversation":
                 self.switch_mode("selection")
 
         @kb.add("c-d")
-        def delete_conversation(event):
+        def _(event):
             if self.mode == "selection":
                 selected_option = self.get_selected_option()
                 if selected_option and selected_option.isdigit():
-                    conversation_id = int(selected_option)
-                    self.conversation_manager.delete_conversation(conversation_id)
-                    logger.info(f"Deleted conversation {conversation_id}")
+                    self.conversation_manager.delete_conversation(int(selected_option))
                     self.update_selection_display()
 
-        # @kb.add('c-up')
-        # def increase_input_height(event):
-        #     logger.info(f"Increased input height to {self.input_height}")
-        #     if self.mode == "conversation":
-        #         self.input_height += 1
-        #         self.create_layout()
-        #         self.app.layout.focus(self.input_buffer)
-        #         self.app.invalidate()
-
-        # @kb.add('c-down')
-        # def decrease_input_height(event):
-        #     if self.mode == "conversation" and self.input_height > 1:
-        #         self.input_height -= 1
-        #         self.create_layout()
-        #         self.app.layout.focus(self.input_buffer)
-        #         self.app.invalidate()
-
         self.create_layout()
-
-        self.app = Application(
-            layout=self.layout,
-            key_bindings=kb,
-            full_screen=True,
-            mouse_support=True,
-        )
-        print(
-            "AI Agent CLI started. Press 'Tab' to switch modes, 'Enter' to select or send messages, and 'Ctrl+C' to exit."
-        )
+        self.app = Application(layout=self.layout, key_bindings=kb, full_screen=True, mouse_support=True)
 
         if self.mode == "selection":
             self.update_selection_display()
@@ -171,189 +128,131 @@ class CLIService:
             self.app.layout.focus(self.input_buffer)
 
     def update_header(self):
-        """Update the header with current token information"""
-        header_text = self.get_header_text()
-
-        # Update the first window (header) with new text
         if hasattr(self, "layout") and self.layout:
             header_window = self.layout.container.children[0]
-            header_window.content = FormattedTextControl(text=header_text)
+            header_window.content = FormattedTextControl(text=self.get_header_text())
             self.app.invalidate()
 
     def get_formatted_messages(self) -> str:
         messages = self.conversation.messages if self.conversation else []
         formatted_text = ""
         for message in messages:
-            role = message.role
-            content = message.content
-
-            if role == ChatRole.USER:
-                formatted_text += f"[User]: {content}\n"
-            elif role == ChatRole.ASSISTANT:
-                formatted_text += f"[Assistant]: {content}\n"
-
+            if message.role == ChatRole.USER:
+                formatted_text += f"[User]: {message.content}\n"
+            elif message.role == ChatRole.ASSISTANT:
+                formatted_text += f"{message.content}\n" # Assistant messages now have prefixes like [Thinking]
         return formatted_text
+
+    def append_to_view(self, text: str):
+        width = get_app().output.get_size().columns
+        wrapped_text = "\n".join(textwrap.wrap(text, width=width, replace_whitespace=False, drop_whitespace=False))
+        
+        current_text = self.view_buffer.text
+        new_text = f"{current_text}{wrapped_text}"
+        self.view_buffer.set_document(Document(new_text, cursor_position=len(new_text)), bypass_readonly=True)
+        self.app.invalidate()
 
     def update_message_display(self, load_conversation: bool = True):
         if load_conversation:
-            self.conversation = self.conversation_manager.load_conversation(
-                self.conversation.id
-            )
-
-        # Update header with latest token count
+            self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
         self.update_header()
-
         raw_text = self.get_formatted_messages()
-        width = get_app().output.get_size().columns
-
-        lines = raw_text.splitlines()
-        wrapped_text = "\n".join(
-            "\n".join(textwrap.wrap(line, width=width)) for line in lines
-        )
-
-        self.view_buffer.set_document(Document(wrapped_text), bypass_readonly=True)
-
+        self.view_buffer.set_document(Document(raw_text), bypass_readonly=True)
         self.app.invalidate()
 
     def update_selection_display(self):
         self.conversations = self.conversation_manager.load_conversations()
-
         formatted_text = "Conversations:\n"
         for idx, conv in self.conversations.items():
             created_date = conv.created_at.strftime("%Y-%m-%d-%H:%M:%S")
             formatted_text += f"{idx:2}. {conv.title:<30} {created_date:>10}\n"
-
         formatted_text += " +. Create New Conversation"
-
         self.view_buffer.set_document(Document(formatted_text), bypass_readonly=True)
-
         self.app.invalidate()
 
     def get_selected_option(self) -> str:
-        line_text = self.get_current_line_text()
-
+        line_text = self.view_buffer.document.current_line
         if line_text.strip() and not line_text.startswith("Conversations:"):
             try:
-                selected_option = line_text.split(".")[0].strip()
-                return selected_option
+                return line_text.split(".")[0].strip()
             except IndexError:
-                logger.error(f"Invalid selection: {line_text}")
                 return ""
+        return ""
 
     def handle_selection(self):
         selected_option = self.get_selected_option()
-
         if selected_option == "+":
             self.create_new_conversation()
-        else:
-            selected_id = int(selected_option)
-            if selected_id in self.conversations:
-                logger.info(f"Selected conversation: {selected_id}")
-                self.open_conversation(selected_id)
-            else:
-                logger.error(f"Invalid selection: {selected_option}")
-                return
+        elif selected_option.isdigit():
+            self.open_conversation(int(selected_option))
 
     def open_conversation(self, conversation_id):
-        """Open an existing conversation by ID"""
         self.conversation = self.conversation_manager.load_conversation(conversation_id)
         self.switch_mode("conversation")
-        logger.info(f"Opened conversation {conversation_id}")
 
     def create_new_conversation(self):
-        """Create a new conversation and switch to conversation mode"""
         new_conversation = self.conversation_manager.create_conversation()
-        new_conversation_id = new_conversation.id
-
-        self.open_conversation(new_conversation_id)
-        logger.info(f"Created new conversation {new_conversation_id}")
+        self.open_conversation(new_conversation.id)
 
     async def send_message_async(self):
         message = self.input_buffer.text.strip()
         if message:
-            save_message = message
-
-            self.conversation.messages.append(
-                Message(
-                    id=len(self.conversation.messages),
-                    content=message,
-                    type="general",
-                    role=ChatRole.USER,
-                    created_at=datetime.now(),
-                )
-            )
-
+            self.is_processing = True
             self.input_buffer.text = ""
-            self.update_message_display(load_conversation=False)
-            self.is_waiting_for_response = True
-
+            self.append_to_view(f"[User]: {message}\n")
             try:
-                self.pending_response = asyncio.create_task(
-                    self.llm_service.send_message(self.conversation.id, message)
-                )
-
-                await self.pending_response
+                await self.llm_service.process_user_request(self.conversation.id, message)
             except Exception as e:
-                logger.error(f"Error sending message: {e}")
-                self.input_buffer.text = save_message
-                return
+                logger.error(f"Error processing request: {e}")
+                self.append_to_view(f"[Error]: {e}\n")
             finally:
-                self.is_waiting_for_response = False
-                self.pending_response = None
-                self.update_message_display()
+                self.is_processing = False
+                self.update_header() # Refresh token count
 
     def send_message_non_blocking(self):
-        """Non-blocking wrapper that can be called from synchronous code"""
-        if not self.is_waiting_for_response:
-            # Create new event loop if one doesn't exist
-            try:
-                loop = asyncio.get_event_loop()
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-
-            # Schedule the async function
+        if not self.is_processing:
             asyncio.create_task(self.send_message_async())
 
-    def get_current_line_text(self) -> str:
-        """Get the text of the line where the cursor is currently positioned"""
-        document = self.view_buffer.document
-        return document.current_line
+    async def _run_async(self):
+        # Start the UI update processing task
+        ui_task = asyncio.create_task(self._process_ui_updates())
+        
+        try:
+            # Run the application
+            await self.app.run_async()
+        finally:
+            # Clean up the UI update task
+            ui_task.cancel()
+            try:
+                await ui_task
+            except asyncio.CancelledError:
+                pass
 
     def run(self):
-        self.app.run()
+        print("AI Agent CLI started. Press 'Enter' to send, 'Shift+Tab' to switch to selection mode, 'Ctrl+C' to exit.")
+        asyncio.run(self._run_async())
 
 
 def main():
     working_dir = os.getcwd()
-
-    if not os.path.exists(working_dir):
-        logger.error(f"Working directory does not exist: {working_dir}")
-        sys.exit(1)
-
     if not os.path.isdir(working_dir):
         logger.error(f"Working directory is not a directory: {working_dir}")
         sys.exit(1)
 
     print(f"Starting AI Agent CLI in directory: {working_dir}")
-
     try:
         chat_app = CLIService(working_dir)
-
         if len(sys.argv) > 1:
             if sys.argv[1] == "new":
                 chat_app.create_new_conversation()
             elif sys.argv[1].isdigit():
-                conversation_id = int(sys.argv[1])
-                chat_app.open_conversation(conversation_id)
-
+                chat_app.open_conversation(int(sys.argv[1]))
         chat_app.run()
     except KeyboardInterrupt:
         print("\nExiting AI Agent CLI.")
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()
