@@ -140,7 +140,7 @@ class CLIService:
             if message.role == ChatRole.USER:
                 formatted_text += f"[User]: {message.content}\n"
             elif message.role == ChatRole.ASSISTANT:
-                formatted_text += f"{message.content}\n" # Assistant messages now have prefixes like [Thinking]
+                formatted_text += f"[Assistant]: {message.content}\n"
         return formatted_text
 
     def append_to_view(self, text: str):

@@ -1,7 +1,7 @@
 import os
 import json
 from typing import Optional
-from models.chat import Conversation, Message, ToolType, ChatRole
+from models.chat import Conversation, Message, MessageType, ToolType, ChatRole
 from datetime import datetime
 from logger import logger
 
@@ -101,7 +101,7 @@ class ConversationManager:
         system_message = Message(
             id=0,
             content=self.system_message,
-            type=ToolType.GENERAL,
+            type=MessageType.TEXT,
             role=ChatRole.SYSTEM,
             created_at=datetime.now(),
             input_tokens=0,

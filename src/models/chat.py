@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
+from models.plan import Plan
 from models.tools import ToolType
 from enum import Enum
 
@@ -9,30 +10,21 @@ class ChatRole(str, Enum):
     ASSISTANT = "assistant"
     SYSTEM = "system"
 
-
 class ChatRequest(BaseModel):
     message: str
 
 
-# The response format for the LLM
-class MessageResponse(BaseModel):
-    type: ToolType
-    content: str
-
-    region: str | None = None  # For SEARCH tool - specify geographic region
-
-
-class MultipleMessageResponse(BaseModel):
-    messages: list[MessageResponse]
-
+class MessageType(str, Enum):
+    TEXT = "text"
+    PLAN = "plan"
+    TOOL = "tool"
 
 class Message(BaseModel):
     id: int
-    content: str
-    type: ToolType | None = None
+    content: str | Plan
+    type: MessageType | None = None
     role: ChatRole
-    created_at: datetime
-    original_message: str | None = None
+    created_at: datetime = datetime.now()
     confirmed: bool | None = (
         None  # True if tool was confirmed, False if declined, None for non-tool messages
     )
@@ -59,9 +51,3 @@ class Conversation(BaseModel):
             "output_tokens": total_output,
             "total_tokens": total_input + total_output,
         }
-
-
-# class MessageContent(BaseModel):
-#     type: ToolType
-#     original_message: str
-#     content: str
