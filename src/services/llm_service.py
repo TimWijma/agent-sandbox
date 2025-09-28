@@ -202,6 +202,7 @@ class LLMService:
 
             # Now, inform the LLM of the tool output and ask for the next step
             followup_msg = (
+                f"The full plan is:\n{plan}\n\n"
                 f"The output of the previous step (Step {current_step.step_id}) is as follows:\n{tool_output}\n\n"
                 "Based on this result, please provide the next step in the plan. If the plan is complete, set `plan_complete` to True.\n"
                 "Format your response as a JSON object adhering to the StepMessage schema."
