@@ -34,13 +34,18 @@ class Message(BaseModel):
     input_tokens: int = 0  # Number of input tokens for this message
     output_tokens: int = 0  # Number of output tokens for this message
 
+    def set_token_usage(self, usage: dict):
+        """Set token usage from LLM response"""
+        self.input_tokens = usage.get("prompt_tokens", 0)
+        self.output_tokens = usage.get("completion_tokens", 0)
+
 
 class Conversation(BaseModel):
     id: int
     title: str
     messages: list[Message]
-    created_at: datetime
-    updated_at: datetime
+    created_at: datetime = datetime.now()
+    updated_at: datetime = datetime.now()
 
     def get_total_tokens(self) -> dict[str, int]:
         """Calculate total input and output tokens for the conversation"""

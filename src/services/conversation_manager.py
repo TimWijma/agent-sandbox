@@ -103,17 +103,12 @@ class ConversationManager:
             content=self.system_message,
             type=MessageType.TEXT,
             role=ChatRole.SYSTEM,
-            created_at=datetime.now(),
-            input_tokens=0,
-            output_tokens=0,
         )
 
         conversation = Conversation(
             id=conversation_id,
             title=f"New Conversation {conversation_id}",
             messages=[system_message],
-            created_at=datetime.now(),
-            updated_at=datetime.now(),
         )
 
         self.save_conversation(conversation)
