@@ -29,7 +29,7 @@ class MultipleMessageResponse(BaseModel):
 class Message(BaseModel):
     id: int
     content: str
-    type: ToolType
+    type: ToolType | None = None
     role: ChatRole
     created_at: datetime
     original_message: str | None = None

@@ -1,6 +1,5 @@
 import os
 import json
-import pkg_resources
 from typing import Optional
 from models.chat import Conversation, Message, ToolType, ChatRole
 from datetime import datetime
