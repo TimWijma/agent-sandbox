@@ -16,7 +16,7 @@ from prompt_toolkit.document import Document
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from logger import logger
-from models.chat import ChatRole, Conversation, Message
+from models.chat import ChatRole, Conversation, Message, MessageType
 from services.llm_service import LLMService
 
 class CLIService:
@@ -35,12 +35,17 @@ class CLIService:
 
         self.setup_ui()
 
-    async def _ui_update_callback(self, message: str):
+    async def _ui_update_callback(self, message: str | Message):
         await self.ui_update_queue.put(message)
 
     async def _process_ui_updates(self):
         while True:
             message = await self.ui_update_queue.get()
+            if isinstance(message, Message):
+                message = self.get_formatted_message(message)
+            else:
+                message = f"[Assistant]: {message}"
+
             self.append_to_view(f"{message}\n")
             self.ui_update_queue.task_done()
 
@@ -137,11 +142,20 @@ class CLIService:
         messages = self.conversation.messages if self.conversation else []
         formatted_text = ""
         for message in messages:
-            if message.role == ChatRole.USER:
-                formatted_text += f"[User]: {message.content}\n"
-            elif message.role == ChatRole.ASSISTANT:
-                formatted_text += f"[Assistant]: {message.content}\n"
+            formatted_text += self.get_formatted_message(message)
         return formatted_text
+    
+    def get_formatted_message(self, message: Message) -> str:
+        if message.role == ChatRole.USER:
+            return f"[User]: {message.content}\n"
+        elif message.role == ChatRole.ASSISTANT:
+            if message.type == MessageType.PLAN:
+                return f"[Assistant - Plan]: {message.content}\n"
+            elif message.type == MessageType.TOOL:
+                return f"[Assistant - Tool]: {message.content}\n"
+            else:
+                return f"[Assistant]: {message.content}\n"
+        return f"[{message.role}]: {message.content}\n"
 
     def append_to_view(self, text: str):
         width = get_app().output.get_size().columns

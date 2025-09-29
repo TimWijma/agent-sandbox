@@ -15,7 +15,7 @@ from datetime import datetime
 import asyncio
 
 class LLMService:
-    def __init__(self, model: str = "gemini/gemini-2.0-flash", ui_callback: Callable[[str], Awaitable[None]] = None):
+    def __init__(self, model: str = "gemini/gemini-2.0-flash", ui_callback: Callable[[str | Message], Awaitable[None]] = None):
         load_dotenv()
 
         self.API_KEY = os.getenv("GEMINI_API_KEY")
@@ -170,7 +170,7 @@ class LLMService:
         logger.info(f"Starting plan execution with initial message: {current_step}")
 
         if self.ui_callback:
-            await self.ui_callback(current_step.message)
+            await self.ui_callback(current_message)
 
         # Now, loop through steps until plan is complete
         while not current_step.plan_complete:
@@ -189,7 +189,7 @@ class LLMService:
 
             tool_message = Message(
                 id=len(conversation.messages),
-                content=f"[Tool Output]:\n{tool_output}",
+                content=tool_output,
                 role=ChatRole.ASSISTANT,
                 type=MessageType.TOOL,
                 created_at=datetime.now(),
@@ -198,7 +198,7 @@ class LLMService:
             conversation.messages.append(tool_message)
             self.conversation_manager.save_conversation(conversation)
             if self.ui_callback:
-                await self.ui_callback(tool_message.content)
+                await self.ui_callback(tool_message)
 
             # Now, inform the LLM of the tool output and ask for the next step
             followup_msg = (
@@ -231,8 +231,7 @@ class LLMService:
             logger.info(f"Proceeding to next step with message: {current_step}")
 
             if self.ui_callback:
-                await self.ui_callback(current_step.message)
-
+                await self.ui_callback(current_step_message)
     
     # async def send_final_summary(self, conversation_id: int, override_text: str = None):
     #     """Generates and sends a final summary to the user."""
