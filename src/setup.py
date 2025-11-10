@@ -1,7 +1,9 @@
 from setuptools import setup, find_packages
 
 with open("requirements.txt", "r") as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    requirements = [
+        line.strip() for line in f if line.strip() and not line.startswith("#")
+    ]
 
 setup(
     name="ai-agent",
@@ -16,8 +18,6 @@ setup(
     author="Tim Wijma",
     description="Simple AI Agent",
     python=">=3.10.12",
-    package_data={
-        "prompts": ["*.txt"]
-    },
+    package_data={"prompts": ["*.txt"]},
     include_package_data=True,
 )

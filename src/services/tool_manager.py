@@ -8,26 +8,31 @@ from tools.search_tool import SearchTool
 from typing import Optional, Tuple
 from logger import logger
 
+
 class ToolManager:
     def __init__(self):
         self.tool_registry: dict[ToolType, BaseTool] = {
             ToolType.CALCULATOR: CalculatorTool(),
             ToolType.PYTHON_INTERPRETER: CodeTool(),
             ToolType.SHELL_COMMAND: CommandTool(),
-            ToolType.GOOGLE_SEARCH: SearchTool(),
+            # ToolType.GOOGLE_SEARCH: SearchTool(),
         }
         self.pending_confirmations: dict[str, Tuple[ToolType, str]] = {}
-        logger.info("ToolManager initialized with tools: %s", list(self.tool_registry.keys()))
+        logger.info(
+            "ToolManager initialized with tools: %s", list(self.tool_registry.keys())
+        )
 
     def get_tool_descriptions(self) -> str:
         """Returns a JSON string describing all available tools."""
         descriptions = []
         for tool in self.tool_registry.values():
-            descriptions.append({
-                "name": tool.name,
-                "description": tool.description,
-                "schema": tool.schema.model_json_schema()
-            })
+            descriptions.append(
+                {
+                    "name": tool.name,
+                    "description": tool.description,
+                    "schema": tool.schema.model_json_schema(),
+                }
+            )
         return json.dumps(descriptions, indent=2)
 
     def execute_tool(
