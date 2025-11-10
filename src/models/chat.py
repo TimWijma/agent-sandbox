@@ -1,7 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel
 from models.plan import Plan
-from models.tools import ToolType
 from enum import Enum
 
 
@@ -10,14 +9,12 @@ class ChatRole(str, Enum):
     ASSISTANT = "assistant"
     SYSTEM = "system"
 
-class ChatRequest(BaseModel):
-    message: str
-
 
 class MessageType(str, Enum):
     TEXT = "text"
     PLAN = "plan"
     TOOL = "tool"
+
 
 class Message(BaseModel):
     id: int

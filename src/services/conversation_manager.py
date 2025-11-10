@@ -1,8 +1,7 @@
 import os
 import json
 from typing import Optional
-from models.chat import Conversation, Message, MessageType, ToolType, ChatRole
-from datetime import datetime
+from models.chat import Conversation, Message, MessageType, ChatRole
 from logger import logger
 
 

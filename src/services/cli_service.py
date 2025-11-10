@@ -1,9 +1,7 @@
 import os
 import sys
 import asyncio
-from datetime import datetime
 import textwrap
-from typing import Optional
 
 from prompt_toolkit.application import Application, get_app
 from prompt_toolkit.buffer import Buffer
@@ -13,11 +11,12 @@ from prompt_toolkit.layout.layout import Layout
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.document import Document
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from logger import logger
 from models.chat import ChatRole, Conversation, Message, MessageType
 from services.llm_service import LLMService
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 class CLIService:
     def __init__(self, working_dir: str = None):
@@ -78,13 +77,27 @@ class CLIService:
         header_text = self.get_header_text()
         windows = [
             Window(content=FormattedTextControl(text=header_text), height=1),
-            Window(content=BufferControl(buffer=self.view_buffer, focusable=True), wrap_lines=True),
+            Window(
+                content=BufferControl(buffer=self.view_buffer, focusable=True),
+                wrap_lines=True,
+            ),
         ]
         if self.mode == "conversation":
-            windows.extend([
-                Window(height=1, content=FormattedTextControl(lambda: "─" * get_app().output.get_size().columns)),
-                Window(content=BufferControl(buffer=self.input_buffer, focusable=True), height=self.input_height, wrap_lines=True),
-            ])
+            windows.extend(
+                [
+                    Window(
+                        height=1,
+                        content=FormattedTextControl(
+                            lambda: "─" * get_app().output.get_size().columns
+                        ),
+                    ),
+                    Window(
+                        content=BufferControl(buffer=self.input_buffer, focusable=True),
+                        height=self.input_height,
+                        wrap_lines=True,
+                    ),
+                ]
+            )
         self.layout = Layout(HSplit(windows))
 
     def setup_ui(self):
@@ -124,7 +137,9 @@ class CLIService:
                     self.update_selection_display()
 
         self.create_layout()
-        self.app = Application(layout=self.layout, key_bindings=kb, full_screen=True, mouse_support=True)
+        self.app = Application(
+            layout=self.layout, key_bindings=kb, full_screen=True, mouse_support=True
+        )
 
         if self.mode == "selection":
             self.update_selection_display()
@@ -144,7 +159,7 @@ class CLIService:
         for message in messages:
             formatted_text += self.get_formatted_message(message)
         return formatted_text
-    
+
     def get_formatted_message(self, message: Message) -> str:
         if message.role == ChatRole.USER:
             return f"[User]: {message.content}\n"
@@ -159,16 +174,24 @@ class CLIService:
 
     def append_to_view(self, text: str):
         width = get_app().output.get_size().columns
-        wrapped_text = "\n".join(textwrap.wrap(text, width=width, replace_whitespace=False, drop_whitespace=False))
-        
+        wrapped_text = "\n".join(
+            textwrap.wrap(
+                text, width=width, replace_whitespace=False, drop_whitespace=False
+            )
+        )
+
         current_text = self.view_buffer.text
         new_text = f"{current_text}{wrapped_text}"
-        self.view_buffer.set_document(Document(new_text, cursor_position=len(new_text)), bypass_readonly=True)
+        self.view_buffer.set_document(
+            Document(new_text, cursor_position=len(new_text)), bypass_readonly=True
+        )
         self.app.invalidate()
 
     def update_message_display(self, load_conversation: bool = True):
         if load_conversation:
-            self.conversation = self.conversation_manager.load_conversation(self.conversation.id)
+            self.conversation = self.conversation_manager.load_conversation(
+                self.conversation.id
+            )
         self.update_header()
         raw_text = self.get_formatted_messages()
         self.view_buffer.set_document(Document(raw_text), bypass_readonly=True)
@@ -215,13 +238,15 @@ class CLIService:
             self.input_buffer.text = ""
             self.append_to_view(f"[User]: {message}\n")
             try:
-                await self.llm_service.process_user_request(self.conversation.id, message)
+                await self.llm_service.process_user_request(
+                    self.conversation.id, message
+                )
             except Exception as e:
                 logger.error(f"Error processing request: {e}")
                 self.append_to_view(f"[Error]: {e}\n")
             finally:
                 self.is_processing = False
-                self.update_header() # Refresh token count
+                self.update_header()  # Refresh token count
 
     def send_message_non_blocking(self):
         if not self.is_processing:
@@ -230,7 +255,7 @@ class CLIService:
     async def _run_async(self):
         # Start the UI update processing task
         ui_task = asyncio.create_task(self._process_ui_updates())
-        
+
         try:
             # Run the application
             await self.app.run_async()
@@ -243,7 +268,9 @@ class CLIService:
                 pass
 
     def run(self):
-        print("AI Agent CLI started. Press 'Enter' to send, 'Shift+Tab' to switch to selection mode, 'Ctrl+C' to exit.")
+        print(
+            "AI Agent CLI started. Press 'Enter' to send, 'Shift+Tab' to switch to selection mode, 'Ctrl+C' to exit."
+        )
         asyncio.run(self._run_async())
 
 
@@ -267,6 +294,7 @@ def main():
     except Exception as e:
         logger.error(f"An error occurred: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

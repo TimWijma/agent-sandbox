@@ -1,4 +1,4 @@
-from typing import List, Callable, Awaitable
+from typing import Callable, Awaitable
 import litellm, os, re
 from logger import logger
 from litellm import completion
@@ -423,40 +423,6 @@ class LLMService:
             if self.ui_callback:
                 await self.ui_callback(current_step_message)
 
-    # async def send_final_summary(self, conversation_id: int, override_text: str = None):
-    #     """Generates and sends a final summary to the user."""
-    #     conversation = self.conversation_manager.load_conversation(conversation_id)
-
-    #     if override_text:
-    #         summary_content = override_text
-    #     else:
-    #         # Create a prompt for the final summary
-    #         summary_prompt = "Based on the preceding actions and observations, provide a concise and helpful final answer to the initial user request."
-
-    #         messages_for_summary = [msg.model_dump() for msg in conversation.messages]
-    #         messages_for_summary.append({"role": "user", "content": summary_prompt})
-
-    #         response = await asyncio.get_event_loop().run_in_executor(
-    #             None,
-    #             lambda: completion(
-    #                 model=self.model,
-    #                 messages=messages_for_summary,
-    #                 temperature=0.5,
-    #             ),
-    #         )
-    #         summary_content = response.choices[0].message.content
-
-    #     summary_message = Message(
-    #         id=len(conversation.messages),
-    #         content=summary_content,
-    #         role=ChatRole.ASSISTANT,
-    #         created_at=datetime.now(),
-    #     )
-    #     conversation.messages.append(summary_message)
-    #     self.conversation_manager.save_conversation(conversation)
-    #     if self.ui_callback:
-    #         await self.ui_callback(summary_message.content)
-
     def substitute_placeholders(self, text: str, outputs: dict) -> str:
         """Substitutes placeholders like $step_1_output with actual values."""
         if not text:
@@ -467,10 +433,3 @@ class LLMService:
             return str(outputs.get(key, match.group(0)))
 
         return re.sub(r"\$([a-zA-Z0-9_]+)", replace_match, text)
-
-    def get_token_count(self, usage: dict) -> tuple[int, int]:
-        """Calculates total tokens used from the usage dictionary."""
-
-        input_tokens = usage.get("prompt_tokens", 0)
-        output_tokens = usage.get("completion_tokens", 0)
-        return input_tokens, output_tokens
